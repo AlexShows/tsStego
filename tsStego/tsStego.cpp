@@ -14,7 +14,17 @@ void read_png_from_file(const char* filename, std::vector<unsigned char>& image,
 	unsigned error = lodepng::decode(image, width, height, filename);
 
 	if (error) 
-		std::cout << "decoder error " << error << ": " << lodepng_error_text(error) << std::endl;
+		std::cout << "Decoder error " << error << ": " << lodepng_error_text(error) << std::endl;
+}
+
+// Write the PNG file from the data structure
+// Color values in the vector are 4 bytes per pixel, ordered RGBARGBA...
+void write_png_to_file(const char* filename, std::vector<unsigned char>& image, unsigned int width, unsigned int height)
+{
+	unsigned error = lodepng::encode(filename, image, width, height);
+
+	if (error) 
+		std::cout << "Encoder error " << error << ": " << lodepng_error_text(error) << std::endl;
 }
 
 // Just getting started...
@@ -31,10 +41,26 @@ void read_png_from_file(const char* filename, std::vector<unsigned char>& image,
 //		- Save the plain text as a new text file (or display it?)
 int main(int argc, char** argv)
 {
+	// Just testing the LodePNG library for now...input, modification, and output
 	std::vector<unsigned char> img_data;
 	unsigned int h, w;
 
 	read_png_from_file("planet.png", img_data, w, h);
+
+	unsigned int index = 0;
+
+	for (auto& color_val : img_data)
+	{
+		if (index % 4 == 2)
+		{
+			if (color_val >= 255)
+				color_val = 0;
+		}
+		
+		index++;
+	}
+
+	write_png_to_file("output.png", img_data, w, h);
 
 	return 0;
 }
