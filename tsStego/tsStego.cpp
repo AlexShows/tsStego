@@ -4,27 +4,73 @@
 // A simple implementation of stegonography in C++
 // Uses the LodePNG library version 20140801 by Lode Vandevenne
 
+#include <sstream>
 #include <iostream>
+#include <exception>
 #include "lodepng.h"
+
+// Read the plain text file in
+void read_text_file(const char* filename, std::vector<unsigned char>& plaintext)
+{
+	// STUB
+}
+
+// Write the plain text file out
+void write_text_file(const char* filename, std::vector<unsigned char>& plaintext)
+{
+	// STUB
+}
 
 // Read the PNG file and save the data into the data structure
 // Color values in the vector are 4 bytes per pixel, ordered RGBARGBA...
+// On an error, throws an exception
 void read_png_from_file(const char* filename, std::vector<unsigned char>& image, unsigned int& width, unsigned int& height)
 {
-	unsigned error = lodepng::decode(image, width, height, filename);
+	unsigned int error = 0;
 
-	if (error) 
-		std::cout << "Decoder error " << error << ": " << lodepng_error_text(error) << std::endl;
+	try
+	{
+		unsigned int error = lodepng::decode(image, width, height, filename);
+	}
+	catch (...)
+	{
+		throw std::exception("Exception in lodepng::decode()");
+		return;
+	}
+
+	if (error)
+	{
+		std::stringstream err_desc;
+		err_desc << "Decoder error " << error << ": " << lodepng_error_text(error);
+		std::string s = err_desc.str();
+		throw std::exception(s.c_str());
+	}
 }
 
 // Write the PNG file from the data structure
 // Color values in the vector are 4 bytes per pixel, ordered RGBARGBA...
+// On an error, throws an exception
 void write_png_to_file(const char* filename, std::vector<unsigned char>& image, unsigned int width, unsigned int height)
 {
-	unsigned error = lodepng::encode(filename, image, width, height);
+	unsigned int error = 0;
+
+	try
+	{
+		unsigned error = lodepng::encode(filename, image, width, height);
+	}
+	catch (...)
+	{
+		throw std::exception("Exception in lodepng::decode()");
+		return;
+	}
 
 	if (error) 
-		std::cout << "Encoder error " << error << ": " << lodepng_error_text(error) << std::endl;
+	{ 
+		std::stringstream err_desc;
+		err_desc << "Encoder error " << error << ": " << lodepng_error_text(error);
+		std::string s = err_desc.str();
+		throw std::exception(s.c_str());
+	}
 }
 
 // Just getting started...
