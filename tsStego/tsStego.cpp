@@ -97,15 +97,15 @@ void write_png_to_file(const char* filename, std::vector<unsigned char>& image, 
 // Just getting started...
 // TODO: 
 //		- Handle command line input
-//		- Load the PNG file into the image data structure
-//		- Load the plain text file
-//		- Encipher the plain text
-//		- Merge the cipher text into the image data structure
-//		- Save the image data structure as a new PNG file
-//		- Load the enciphered PNG file into the enciphered image data structure
+//		- Load the PNG file into the image data structure [ DONE ] 
+//		- Load the plain text file [ DONE ] 
+//		- Encipher the plain text 
+//		- Merge the cipher text into the image data structure 
+//		- Save the image data structure as a new PNG file [ DONE ]
+//		- Load the enciphered PNG file into the enciphered image data structure 
 //		- Extract the cipher text from the enciphered image data structure
-//		- Decipher to plain text
-//		- Save the plain text as a new text file (or display it?)
+//		- Decipher to plain text 
+//		- Save the plain text as a new text file [ DONE ]
 int main(int argc, char** argv)
 {
 	// Testing the read file function
