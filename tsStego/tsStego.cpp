@@ -4,6 +4,7 @@
 // A simple implementation of stegonography in C++
 // Uses the LodePNG library version 20140801 by Lode Vandevenne
 
+#include <fstream>
 #include <sstream>
 #include <iostream>
 #include <exception>
@@ -12,13 +13,34 @@
 // Read the plain text file in
 void read_text_file(const char* filename, std::vector<unsigned char>& plaintext)
 {
-	// STUB
+	try
+	{
+		std::fstream text_file(filename);
+		while (text_file.good())
+			plaintext.push_back(text_file.get());
+	}
+	catch (...)
+	{
+		throw std::exception("Exception in read_text_file()");
+		return;
+	}
 }
 
 // Write the plain text file out
 void write_text_file(const char* filename, std::vector<unsigned char>& plaintext)
 {
-	// STUB
+	try
+	{
+		std::ofstream text_file(filename);
+		// TODO: Debug the mystery trailing character on the output
+		for (auto& c : plaintext)
+			text_file.put(c);
+	}
+	catch (...)
+	{
+		throw std::exception("Exception in write_text_file()");
+		return;
+	}
 }
 
 // Read the PNG file and save the data into the data structure
@@ -27,7 +49,6 @@ void write_text_file(const char* filename, std::vector<unsigned char>& plaintext
 void read_png_from_file(const char* filename, std::vector<unsigned char>& image, unsigned int& width, unsigned int& height)
 {
 	unsigned int error = 0;
-
 	try
 	{
 		unsigned int error = lodepng::decode(image, width, height, filename);
@@ -87,6 +108,13 @@ void write_png_to_file(const char* filename, std::vector<unsigned char>& image, 
 //		- Save the plain text as a new text file (or display it?)
 int main(int argc, char** argv)
 {
+	// Testing the read file function
+	std::vector<unsigned char>plain_text;
+	read_text_file("example.txt", plain_text);
+
+	plain_text[3] = 'F';
+	write_text_file("output.txt", plain_text);
+
 	// Just testing the LodePNG library for now...input, modification, and output
 	std::vector<unsigned char> img_data;
 	unsigned int h, w;
