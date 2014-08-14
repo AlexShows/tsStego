@@ -114,6 +114,8 @@ void merge_plaintext_into_img_data(std::vector<unsigned char>& plaintext, std::v
 	auto img_ptr = img_data.begin();
 	unsigned char tmp = 0;
 
+	// TODO: Fix this - the masking is WRONG
+
 	// Loop through all the characters
 	for (auto& c : plaintext)
 	{
@@ -180,6 +182,8 @@ int main(int argc, char** argv)
 		
 		index++;
 	}
+
+	merge_plaintext_into_img_data(plain_text, img_data);
 
 	write_png_to_file("output.png", img_data, w, h);
 
