@@ -119,25 +119,26 @@ void merge_plaintext_into_img_data(std::vector<unsigned char>& plaintext, std::v
 	// Loop through all the characters
 	for (auto& c : plaintext)
 	{
+		unsigned char tmp_ch = c;
 		// First 3 MSBs from the char are put into the Red channels 3 LSBs
-		tmp = c & 0xE0; // mask off just the 3 MSBs
+		tmp = tmp_ch & 0xE0; // mask off just the 3 MSBs
 		tmp = tmp >> 5; // shift those 3 bits to the right 5 to make them align with the 3 LSBs
-		c = ( c & 0x1F) | (tmp & 0x7); // merge the 5 bits from the original with the 3 shifted MSBs of the text
-
-		c++; // Next character
+		c = (tmp_ch & 0x1F) | (tmp & 0x7); // merge the 5 bits from the original with the 3 shifted MSBs of the text
+		
+		//c++; // Next character
 		img_ptr++; // Next color channel (Blue)
 
 		// Next 3 bits from the char are put into the Blue channels 3 LSBs
-		tmp = c & 0x1C; // mask off just the 3 bits in the middle of the byte
-		tmp = tmp >> 2; // shift those 3 bits to the right 2 to make them align with the 3 LSBs
+		//tmp = c & 0x1C; // mask off just the 3 bits in the middle of the byte
+		//tmp = tmp >> 2; // shift those 3 bits to the right 2 to make them align with the 3 LSBs
 		c = (c & 0x1F) | (tmp & 0x7); // merge the 5 bits from the original with the 3 shifted MSBs of the text
 
-		c++; // Next character
+		//c++; // Next character
 		img_ptr++; // Next color channel (Green)
 
 		// Next 2 bits from the char are put into the Green channels 2 LSBs
-		tmp = c & 0x3; // mask off just the 2 LSBs
-		c = (c & 0x1F) | (tmp & 0x7); // merge the 5 bits from the original with the 3 shifted MSBs of the text
+		//tmp = c & 0x3; // mask off just the 2 LSBs
+		//c = (c & 0x1F) | (tmp & 0x7); // merge the 5 bits from the original with the 3 shifted MSBs of the text
 
 		img_ptr++; // Next color channel (Alpha)
 		img_ptr++; // Next color channel (Red of the next pixel)
