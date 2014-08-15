@@ -110,38 +110,35 @@ void merge_plaintext_into_img_data(std::vector<unsigned char>& plaintext, std::v
 	if (img_data.size() < 4 * plaintext.size())
 		throw std::exception("Exception in merge_plaintext_into_img_data: image is too small to fit all the text");
 
-	// An iterator for moving through the image data
-	auto img_ptr = img_data.begin();
 	unsigned char tmp = 0;
+	unsigned int img_index = 0;
 
 	// TODO: Fix this - the masking is WRONG
 
 	// Loop through all the characters
 	for (auto& c : plaintext)
 	{
-		unsigned char tmp_ch = c;
-		// First 3 MSBs from the char are put into the Red channels 3 LSBs
-		tmp = tmp_ch & 0xE0; // mask off just the 3 MSBs
-		tmp = tmp >> 5; // shift those 3 bits to the right 5 to make them align with the 3 LSBs
-		c = (tmp_ch & 0x1F) | (tmp & 0x7); // merge the 5 bits from the original with the 3 shifted MSBs of the text
+		// First 3 MSBs from the character are put into the Red channels 3 LSBs
+		tmp = c >> 5; // shift those 3 bits to the right 5 to make them align with the 3 LSBs
+		img_data[img_index] = (img_data[img_index] & 0xF8) | (tmp & 0x7); // merge the 5 bits from the original with the 3 shifted MSBs of the text
 		
 		//c++; // Next character
-		img_ptr++; // Next color channel (Blue)
+		img_index++; // Next color channel (Blue)
 
 		// Next 3 bits from the char are put into the Blue channels 3 LSBs
 		//tmp = c & 0x1C; // mask off just the 3 bits in the middle of the byte
 		//tmp = tmp >> 2; // shift those 3 bits to the right 2 to make them align with the 3 LSBs
-		c = (c & 0x1F) | (tmp & 0x7); // merge the 5 bits from the original with the 3 shifted MSBs of the text
+		//c = (c & 0x1F) | (tmp & 0x7); // merge the 5 bits from the original with the 3 shifted MSBs of the text
 
 		//c++; // Next character
-		img_ptr++; // Next color channel (Green)
+		img_index++; // Next color channel (Green)
 
 		// Next 2 bits from the char are put into the Green channels 2 LSBs
 		//tmp = c & 0x3; // mask off just the 2 LSBs
 		//c = (c & 0x1F) | (tmp & 0x7); // merge the 5 bits from the original with the 3 shifted MSBs of the text
 
-		img_ptr++; // Next color channel (Alpha)
-		img_ptr++; // Next color channel (Red of the next pixel)
+		img_index++; // Next color channel (Alpha)
+		img_index++; // Next color channel (Red of the next pixel)
 	}
 }
 
