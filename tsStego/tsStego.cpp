@@ -170,19 +170,6 @@ int main(int argc, char** argv)
 
 	read_png_from_file("planet.png", img_data, w, h);
 
-	unsigned int index = 0;
-
-	for (auto& color_val : img_data)
-	{
-		if (index % 4 == 2)
-		{
-			if (color_val >= 255)
-				color_val = 0;
-		}
-		
-		index++;
-	}
-
 	merge_plaintext_into_img_data(plain_text, img_data);
 
 	write_png_to_file("output.png", img_data, w, h);
