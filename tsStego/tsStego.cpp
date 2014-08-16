@@ -113,32 +113,34 @@ void merge_plaintext_into_img_data(std::vector<unsigned char>& plaintext, std::v
 	unsigned char tmp = 0;
 	unsigned int img_index = 0;
 
-	// TODO: Fix this - the masking is WRONG
-
 	// Loop through all the characters
 	for (auto& c : plaintext)
 	{
-		// First 3 MSBs from the character are put into the Red channels 3 LSBs
+		// First color channel is Red
+
+		// First 3 MSBs from the character are put into the Red channel's 3 LSBs
 		tmp = c >> 5; // shift those 3 bits to the right 5 to make them align with the 3 LSBs
-		img_data[img_index] = (img_data[img_index] & 0xF8) | (tmp & 0x7); // merge the 5 bits from the original with the 3 shifted MSBs of the text
-		
-		//c++; // Next character
+		// merge the 5 bits from the original with the 3 shifted MSBs of the text
+		img_data[img_index] = (img_data[img_index] & 0xF8) | (tmp & 0x7);
+
 		img_index++; // Next color channel (Blue)
 
-		// Next 3 bits from the char are put into the Blue channels 3 LSBs
-		//tmp = c & 0x1C; // mask off just the 3 bits in the middle of the byte
-		//tmp = tmp >> 2; // shift those 3 bits to the right 2 to make them align with the 3 LSBs
-		//c = (c & 0x1F) | (tmp & 0x7); // merge the 5 bits from the original with the 3 shifted MSBs of the text
+		// Next 3 bits from the character are put into the Blue channel's 3 LSBs
+		tmp = c << 3; // shave off the 3 MSBs
+		tmp = tmp >> 5; // shift back 5 to make them align with the 3 LSBs
+		// merge the 5 bits from the original with the 3 shifted bits of the text
+		img_data[img_index] = (img_data[img_index] & 0xF8) | (tmp & 0x7);
 
-		//c++; // Next character
 		img_index++; // Next color channel (Green)
 
-		// Next 2 bits from the char are put into the Green channels 2 LSBs
-		//tmp = c & 0x3; // mask off just the 2 LSBs
-		//c = (c & 0x1F) | (tmp & 0x7); // merge the 5 bits from the original with the 3 shifted MSBs of the text
+		// The 2 LSBs from the character are put into the Green channel's 2 LSBs
+		tmp = c << 6; // shave off the 6 MSBs
+		tmp = tmp >> 6; // shift back 6 to make them align with the 2 LSBs
+		// merge the 6 bits from the original with the 2 shifted bits of the text
+		img_data[img_index] = (img_data[img_index] & 0xFC) | (tmp & 0x3);
 
 		img_index++; // Next color channel (Alpha)
-		img_index++; // Next color channel (Red of the next pixel)
+		img_index++; // Next color channel (Red of the next pixel...so we're ready for next char)
 	}
 }
 
