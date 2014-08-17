@@ -102,7 +102,10 @@ void write_png_to_file(const char* filename, std::vector<unsigned char>& image, 
 // The bits will be placed starting from the LSB of each byte so as to make the least impact to the 
 // image when viewed by a human
 // We put fewer bits into the Green channel because human eyes are more sensitive to a yellowish-green
-void merge_plaintext_into_img_data(std::vector<unsigned char>& plaintext, std::vector<unsigned char>& img_data)
+// The using_XOR flag allows the merge to either overwrite the destination bits in the img data, or XOR
+// the source bits (from the text data) with the destination
+// Throws exception on error
+void merge_text_into_img_data(std::vector<unsigned char>& plaintext, std::vector<unsigned char>& img_data, bool using_XOR=false)
 {
 	// Bounds check
 	// Using 4 * the plaintext size because each element in img_data is a color channel of a pixel, of which
@@ -120,24 +123,43 @@ void merge_plaintext_into_img_data(std::vector<unsigned char>& plaintext, std::v
 
 		// First 3 MSBs from the character are put into the Red channel's 3 LSBs
 		tmp = c >> 5; // shift those 3 bits to the right 5 to make them align with the 3 LSBs
-		// merge the 5 bits from the original with the 3 shifted MSBs of the text
-		img_data[img_index] = (img_data[img_index] & 0xF8) | (tmp & 0x7);
+
+		// Depending on the XOR state flag, either overwrite the data or XOR the text into it
+		if (!using_XOR)
+		{
+			// merge the 5 bits from the original with the 3 shifted MSBs of the text
+			img_data[img_index] = (img_data[img_index] & 0xF8) | (tmp & 0x7);
+		}
+		else // Otherwise XOR the bits in, requiring the original image's pixel data to extract
+			img_data[img_index] ^= tmp;
 
 		img_index++; // Next color channel (Blue)
 
 		// Next 3 bits from the character are put into the Blue channel's 3 LSBs
 		tmp = c << 3; // shave off the 3 MSBs
 		tmp = tmp >> 5; // shift back 5 to make them align with the 3 LSBs
-		// merge the 5 bits from the original with the 3 shifted bits of the text
-		img_data[img_index] = (img_data[img_index] & 0xF8) | (tmp & 0x7);
+		// Depending on the XOR state flag, either overwrite the data or XOR the text into it
+		if (!using_XOR)
+		{
+			// merge the 5 bits from the original with the 3 shifted MSBs of the text
+			img_data[img_index] = (img_data[img_index] & 0xF8) | (tmp & 0x7);
+		}
+		else // Otherwise XOR the bits in, requiring the original image's pixel data to extract
+			img_data[img_index] ^= tmp;
 
 		img_index++; // Next color channel (Green)
 
 		// The 2 LSBs from the character are put into the Green channel's 2 LSBs
 		tmp = c << 6; // shave off the 6 MSBs
 		tmp = tmp >> 6; // shift back 6 to make them align with the 2 LSBs
-		// merge the 6 bits from the original with the 2 shifted bits of the text
-		img_data[img_index] = (img_data[img_index] & 0xFC) | (tmp & 0x3);
+		// Depending on the XOR state flag, either overwrite the data or XOR the text into it
+		if (!using_XOR)
+		{
+			// merge the 5 bits from the original with the 3 shifted MSBs of the text
+			img_data[img_index] = (img_data[img_index] & 0xF8) | (tmp & 0x7);
+		}
+		else // Otherwise XOR the bits in, requiring the original image's pixel data to extract
+			img_data[img_index] ^= tmp;
 
 		img_index++; // Next color channel (Alpha)
 		img_index++; // Next color channel (Red of the next pixel...so we're ready for next char)
@@ -170,7 +192,7 @@ int main(int argc, char** argv)
 
 	read_png_from_file("planet.png", img_data, w, h);
 
-	merge_plaintext_into_img_data(plain_text, img_data);
+	merge_text_into_img_data(plain_text, img_data);
 
 	write_png_to_file("output.png", img_data, w, h);
 
