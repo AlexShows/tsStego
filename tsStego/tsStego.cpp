@@ -105,39 +105,33 @@ void write_png_to_file(const char* filename, std::vector<unsigned char>& image, 
 // The using_XOR flag allows the merge to either overwrite the destination bits in the img data, or XOR
 // the source bits (from the text data) with the destination
 // Throws exception on error
-void merge_text_into_img_data(std::vector<unsigned char>& plaintext, std::vector<unsigned char>& img_data, bool using_XOR=false)
+void merge_text_into_img_data(std::vector<unsigned char>& text_data, std::vector<unsigned char>& img_data, bool using_XOR=false)
 {
-	// Bounds check
-	// Using 4 * the plaintext size because each element in img_data is a color channel of a pixel, of which
-	// there are 4 channels per pixel, and we're going to overwrite certain bits across three of the channels
-	if (img_data.size() < 4 * plaintext.size())
-		throw std::exception("Exception in merge_plaintext_into_img_data: image is too small to fit all the text");
+	try
+	{
+		// Bounds check
+		// Using 4 * the plaintext size because each element in img_data is a color channel of a pixel, of which
+		// there are 4 channels per pixel, and we're going to overwrite certain bits across three of the channels
+		if (img_data.size() < 4 * text_data.size())
+			throw std::exception("Exception in merge_text_into_img_data: image is too small to fit all the text");
+
+	}
+	catch (...)
+	{
+		throw std::exception("Exception in merge_text_into_img_data: possible invalid reference to image or text data");
+	}
 
 	unsigned char tmp = 0;
 	unsigned int img_index = 0;
 
 	// Loop through all the characters
-	for (auto& c : plaintext)
+	for (auto& c : text_data)
 	{
 		// First color channel is Red
 
 		// First 3 MSBs from the character are put into the Red channel's 3 LSBs
 		tmp = c >> 5; // shift those 3 bits to the right 5 to make them align with the 3 LSBs
 
-		// Depending on the XOR state flag, either overwrite the data or XOR the text into it
-		if (!using_XOR)
-		{
-			// merge the 5 bits from the original with the 3 shifted MSBs of the text
-			img_data[img_index] = (img_data[img_index] & 0xF8) | (tmp & 0x7);
-		}
-		else // Otherwise XOR the bits in, requiring the original image's pixel data to extract
-			img_data[img_index] ^= tmp;
-
-		img_index++; // Next color channel (Blue)
-
-		// Next 3 bits from the character are put into the Blue channel's 3 LSBs
-		tmp = c << 3; // shave off the 3 MSBs
-		tmp = tmp >> 5; // shift back 5 to make them align with the 3 LSBs
 		// Depending on the XOR state flag, either overwrite the data or XOR the text into it
 		if (!using_XOR)
 		{
@@ -161,9 +155,43 @@ void merge_text_into_img_data(std::vector<unsigned char>& plaintext, std::vector
 		else // Otherwise XOR the bits in, requiring the original image's pixel data to extract
 			img_data[img_index] ^= tmp;
 
+		img_index++; // Next color channel (Blue)
+
+		// Next 3 bits from the character are put into the Blue channel's 3 LSBs
+		tmp = c << 3; // shave off the 3 MSBs
+		tmp = tmp >> 5; // shift back 5 to make them align with the 3 LSBs
+		// Depending on the XOR state flag, either overwrite the data or XOR the text into it
+		if (!using_XOR)
+		{
+			// merge the 5 bits from the original with the 3 shifted MSBs of the text
+			img_data[img_index] = (img_data[img_index] & 0xF8) | (tmp & 0x7);
+		}
+		else // Otherwise XOR the bits in, requiring the original image's pixel data to extract
+			img_data[img_index] ^= tmp;
+		
 		img_index++; // Next color channel (Alpha)
 		img_index++; // Next color channel (Red of the next pixel...so we're ready for next char)
 	}
+}
+
+// Given an image or images, extract the text found inside them
+// See the merge function for more on how the text is embedded in the image
+// If the using_XOR flag is set, ref_img_data must be valid, as it's required
+// in order to extract the text properly
+// ref_img_data can be NULL, but using_XOR must be false if it is
+// text_data should be an empty vector, but if it isn't, the data will be appended to the end
+// Throws exception on error
+void extract_text_from_img_data(std::vector<unsigned char>& img_data, std::vector<unsigned char>& ref_img_data, std::vector<unsigned char>& text_data, bool using_XOR = false)
+{
+	/*
+	TODO:
+	-Validate inputs
+	-Throw exceptions
+	-Loop through img_data
+	-If using XOR, perform the XOR of img_data with the ref_img_data
+	-Extract the 3 LSBs from Red, 2 LSBs from Green, and 3 LSBs from Blue, skipping Alpha
+	-Merge the 3+2+3 bits into the next uchar of the text data vector
+	*/
 }
 
 // TODO: 
