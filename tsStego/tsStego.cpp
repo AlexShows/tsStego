@@ -185,13 +185,61 @@ void extract_text_from_img_data(std::vector<unsigned char>& img_data, std::vecto
 {
 	/*
 	TODO:
-	-Validate inputs
-	-Throw exceptions
 	-Loop through img_data
 	-If using XOR, perform the XOR of img_data with the ref_img_data
 	-Extract the 3 LSBs from Red, 2 LSBs from Green, and 3 LSBs from Blue, skipping Alpha
 	-Merge the 3+2+3 bits into the next uchar of the text data vector
 	*/
+	try
+	{
+		// Validate inputs
+		// Just trying to trigger an exception here if these are NULL pointers
+		unsigned int img_data_size = img_data.size();
+		unsigned int text_data_size = text_data.size();
+		unsigned int ref_img_data_size = 0;
+		if (using_XOR)
+			ref_img_data_size = ref_img_data.size();				
+	}
+	catch (...)
+	{
+		throw std::exception("Exception in extract_text_from_img_data: possible invalid reference to image or text data");
+	}
+
+	unsigned char tmp = 0;
+	unsigned char reconstruct = 0;
+	unsigned int index = 0;
+
+	// Loop through all the color channels of all the pixels
+	for (auto& p : img_data)
+	{
+		if (using_XOR)
+			tmp = p ^ ref_img_data[index];
+
+		// To reconstruct the character, we need 3 bits of Red, 2 bits of Green, and 3 bits of Blue
+		switch (index % 4)
+		{
+		case 0:
+			tmp = tmp << 5; // Red Channel = shift left 5 bits
+			reconstruct |= tmp;
+			break;
+		case 1:
+			tmp = tmp << 6; // Green Channel = shift left 6 bits...
+			tmp = tmp >> 3; // ...then back right 3 bits
+			reconstruct |= tmp;
+			break;
+		case 2:
+			tmp = tmp << 6; // Green Channel = shift left 7 bits...
+			tmp = tmp >> 5; // ...then back right 5 bits
+			reconstruct |= tmp;
+			break;
+		default:
+			text_data.push_back(reconstruct);
+			reconstruct = 0;
+			break;
+		}
+		
+		index++;
+	}
 }
 
 // TODO: 
