@@ -104,6 +104,8 @@ void write_png_to_file(const char* filename, std::vector<unsigned char>& image, 
 // We put fewer bits into the Green channel because human eyes are more sensitive to a yellowish-green
 // The using_XOR flag allows the merge to either overwrite the destination bits in the img data, or XOR
 // the source bits (from the text data) with the destination
+// TODO: Add some kind of preamble or text block description so the reader can know how many characters 
+//		are inside the image (otherwise the reader would have to read all pixels' color channels)
 // Throws exception on error
 void merge_text_into_img_data(std::vector<unsigned char>& text_data, std::vector<unsigned char>& img_data, bool using_XOR=false)
 {
@@ -143,23 +145,23 @@ void merge_text_into_img_data(std::vector<unsigned char>& text_data, std::vector
 
 		img_index++; // Next color channel (Green)
 
-		// The 2 LSBs from the character are put into the Green channel's 2 LSBs
-		tmp = c << 6; // shave off the 6 MSBs
+		// Next 2 bits from the character are put into the Green channel's 2 LSBs
+		tmp = c << 3; // shave off the 3 MSBs
 		tmp = tmp >> 6; // shift back 6 to make them align with the 2 LSBs
 		// Depending on the XOR state flag, either overwrite the data or XOR the text into it
 		if (!using_XOR)
 		{
-			// merge the 5 bits from the original with the 3 shifted MSBs of the text
-			img_data[img_index] = (img_data[img_index] & 0xF8) | (tmp & 0x7);
+			// merge the 5 bits from the original with the 2 shifted MSBs of the text
+			img_data[img_index] = (img_data[img_index] & 0xFC) | (tmp & 0x3);
 		}
 		else // Otherwise XOR the bits in, requiring the original image's pixel data to extract
 			img_data[img_index] ^= tmp;
 
 		img_index++; // Next color channel (Blue)
 
-		// Next 3 bits from the character are put into the Blue channel's 3 LSBs
-		tmp = c << 3; // shave off the 3 MSBs
-		tmp = tmp >> 5; // shift back 5 to make them align with the 3 LSBs
+		// The 3 LSBs from the character are put into the Blue channel's 3 LSBs
+//		tmp = c << 5; // shave off the 3 MSBs
+//		tmp = tmp >> 5; // shift back 5 to make them align with the 3 LSBs
 		// Depending on the XOR state flag, either overwrite the data or XOR the text into it
 		if (!using_XOR)
 		{
@@ -180,16 +182,10 @@ void merge_text_into_img_data(std::vector<unsigned char>& text_data, std::vector
 // in order to extract the text properly
 // ref_img_data can be NULL, but using_XOR must be false if it is
 // text_data should be an empty vector, but if it isn't, the data will be appended to the end
+// TODO: Need to fix the passing of NULL for ref_img_data
 // Throws exception on error
 void extract_text_from_img_data(std::vector<unsigned char>& img_data, std::vector<unsigned char>& ref_img_data, std::vector<unsigned char>& text_data, bool using_XOR = false)
 {
-	/*
-	TODO:
-	-Loop through img_data
-	-If using XOR, perform the XOR of img_data with the ref_img_data
-	-Extract the 3 LSBs from Red, 2 LSBs from Green, and 3 LSBs from Blue, skipping Alpha
-	-Merge the 3+2+3 bits into the next uchar of the text data vector
-	*/
 	try
 	{
 		// Validate inputs
@@ -214,6 +210,8 @@ void extract_text_from_img_data(std::vector<unsigned char>& img_data, std::vecto
 	{
 		if (using_XOR)
 			tmp = p ^ ref_img_data[index];
+		else
+			tmp = p;
 
 		// To reconstruct the character, we need 3 bits of Red, 2 bits of Green, and 3 bits of Blue
 		switch (index % 4)
@@ -222,13 +220,13 @@ void extract_text_from_img_data(std::vector<unsigned char>& img_data, std::vecto
 			tmp = tmp << 5; // Red Channel = shift left 5 bits
 			reconstruct |= tmp;
 			break;
-		case 1:
+		case 1: 
 			tmp = tmp << 6; // Green Channel = shift left 6 bits...
 			tmp = tmp >> 3; // ...then back right 3 bits
 			reconstruct |= tmp;
 			break;
 		case 2:
-			tmp = tmp << 6; // Green Channel = shift left 7 bits...
+			tmp = tmp << 5; // Blue Channel = shift left 5 bits...
 			tmp = tmp >> 5; // ...then back right 5 bits
 			reconstruct |= tmp;
 			break;
@@ -256,7 +254,7 @@ void extract_text_from_img_data(std::vector<unsigned char>& img_data, std::vecto
 int main(int argc, char** argv)
 {
 	// Testing the read file function
-	std::vector<unsigned char>plain_text;
+	std::vector<unsigned char> plain_text;
 	read_text_file("example.txt", plain_text);
 
 	plain_text[3] = 'F';
@@ -272,5 +270,13 @@ int main(int argc, char** argv)
 
 	write_png_to_file("output.png", img_data, w, h);
 
+	// Testing the reading back of the text embedded into the image
+	// TODO: Test the XOR feature
+	std::vector<unsigned char> modified_img_data;
+	std::vector<unsigned char> ref_img_data; // Not using this for now
+	std::vector<unsigned char> modified_text_data;
+	read_png_from_file("output.png", modified_img_data, w, h);
+	extract_text_from_img_data(modified_img_data, ref_img_data, modified_text_data);
+	
 	return 0;
 }
