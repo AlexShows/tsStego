@@ -129,6 +129,8 @@ void merge_text_into_img_data(std::vector<unsigned char>& text_data, std::vector
 	// Loop through all the characters
 	for (auto& c : text_data)
 	{
+		// TODO: Test and fix the XOR paths of this function
+
 		// First color channel is Red
 
 		// First 3 MSBs from the character are put into the Red channel's 3 LSBs
@@ -160,8 +162,7 @@ void merge_text_into_img_data(std::vector<unsigned char>& text_data, std::vector
 		img_index++; // Next color channel (Blue)
 
 		// The 3 LSBs from the character are put into the Blue channel's 3 LSBs
-//		tmp = c << 5; // shave off the 3 MSBs
-//		tmp = tmp >> 5; // shift back 5 to make them align with the 3 LSBs
+		tmp = c;
 		// Depending on the XOR state flag, either overwrite the data or XOR the text into it
 		if (!using_XOR)
 		{
@@ -277,6 +278,7 @@ int main(int argc, char** argv)
 	std::vector<unsigned char> modified_text_data;
 	read_png_from_file("output.png", modified_img_data, w, h);
 	extract_text_from_img_data(modified_img_data, ref_img_data, modified_text_data);
+	write_text_file("output.txt", modified_text_data);
 	
 	return 0;
 }
