@@ -104,8 +104,6 @@ void write_png_to_file(const char* filename, std::vector<unsigned char>& image, 
 // We put fewer bits into the Green channel because human eyes are more sensitive to a yellowish-green
 // The using_XOR flag allows the merge to either overwrite the destination bits in the img data, or XOR
 // the source bits (from the text data) with the destination
-// TODO: Add some kind of preamble or text block description so the reader can know how many characters 
-//		are inside the image (otherwise the reader would have to read all pixels' color channels)
 // Throws exception on error
 void merge_text_into_img_data(std::vector<unsigned char>& text_data, std::vector<unsigned char>& img_data, bool using_XOR=false)
 {
@@ -122,6 +120,9 @@ void merge_text_into_img_data(std::vector<unsigned char>& text_data, std::vector
 	{
 		throw std::exception("Exception in merge_text_into_img_data: possible invalid reference to image or text data");
 	}
+
+	// Add an EOF tag so the extraction knows when to stop
+	text_data.push_back(0x1a);
 
 	unsigned char tmp = 0;
 	unsigned int img_index = 0;
@@ -205,10 +206,14 @@ void extract_text_from_img_data(std::vector<unsigned char>& img_data, std::vecto
 	unsigned char tmp = 0;
 	unsigned char reconstruct = 0;
 	unsigned int index = 0;
+	bool finished = false;
 
 	// Loop through all the color channels of all the pixels
 	for (auto& p : img_data)
 	{
+		if (finished)
+			break;
+
 		if (using_XOR)
 			tmp = p ^ ref_img_data[index];
 		else
@@ -231,8 +236,11 @@ void extract_text_from_img_data(std::vector<unsigned char>& img_data, std::vecto
 			tmp = tmp >> 5; // ...then back right 5 bits
 			reconstruct |= tmp;
 			break;
-		default:
-			text_data.push_back(reconstruct);
+		default: // Alpha channel, so commit the reconstructed character or exit the loop on EOF
+			if (reconstruct == 0x1a) // EOF character
+				finished = true;
+			else
+				text_data.push_back(reconstruct);
 			reconstruct = 0;
 			break;
 		}
@@ -257,11 +265,12 @@ int main(int argc, char** argv)
 	// Testing the read file function
 	std::vector<unsigned char> plain_text;
 	read_text_file("example.txt", plain_text);
-
+	/*
 	plain_text[3] = 'F';
-	write_text_file("output.txt", plain_text);
+	plain_text[4] = 0x1a;
+	write_text_file("output1.txt", plain_text);
+	*/
 
-	// Just testing the LodePNG library for now...input, modification, and output
 	std::vector<unsigned char> img_data;
 	unsigned int h, w;
 
