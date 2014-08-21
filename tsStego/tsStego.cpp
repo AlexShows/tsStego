@@ -280,18 +280,49 @@ void capture_args(int argc, char** argv, std::map<unsigned char, std::string>& a
 	Thus there could be either 5 or 6 parameters in total, and the order varies depending on the op.
 	********************************************************/ 
 
+	if (argc < 5)
+	{
+		std::cout << "Too few arguments provided. See usage info." << std::endl;
+		throw std::exception("In capture_args: too few arguments provided.");
+	}
+
 	try
 	{
-		// The first argument is always the absolutely path to the binary
-		args_map[MAP_BINARY_PATH] = argv[0];
+		int n = 0;
+
+		// The first argument is always the absolute path to the binary
+		args_map[MAP_BINARY_PATH] = argv[n];
 
 		// The second argument should always be the operation name 
-		for (int i = 1; i < argc; i++)
+		args_map[MAP_OPERATION_TYPE] = argv[n+1];
+
+		// The third _could_ be the xor flag, or it could be a filename
+		if (argv[n+2] == MAP_USING_XOR_STR)
 		{
-			if (argv[i] == MAP_USING_XOR_STR)
-				args_map[MAP_USING_XOR] = argv[i];
-			// TODO: Contiue working on this...or scratch the loop and do this 
-			//		more explicitly
+			// Because of the use of XOR, the arg count must be 6 now
+			if (argc < 6)
+			{
+				std::cout << "Too few arguments provided. See usage info." << std::endl;
+				throw std::exception("In capture_args: too few arguments provided.");
+			}
+
+			args_map[MAP_USING_XOR] = MAP_USING_XOR_STR;
+			n++;
+		}
+		// ...else we do nothing and the xor flag isn't put into the map
+
+		// The next is a filename that depends on the operation
+		if (args_map[MAP_OPERATION_TYPE] == MAP_ENCODE_OPERATION_NAME)
+		{
+			args_map[MAP_PLAINTEXT_FILENAME] = argv[n+3];
+			args_map[MAP_REF_IMAGE_FILENAME] = argv[n+4];
+			args_map[MAP_CIPHER_IMAGE_FILENAME] = argv[n+5];
+		}
+		else if (args_map[MAP_OPERATION_TYPE] == MAP_DECODE_OPERATION_NAME)
+		{
+			args_map[MAP_CIPHER_IMAGE_FILENAME] = argv[n + 3];
+			args_map[MAP_REF_IMAGE_FILENAME] = argv[n + 4];
+			args_map[MAP_PLAINTEXT_FILENAME] = argv[n + 5];
 		}
 	}
 	catch (...)
