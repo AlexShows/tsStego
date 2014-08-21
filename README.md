@@ -10,8 +10,9 @@ Currently this just takes a text file input and a PNG file input, merges the tex
 Future Work
 ===========
 
-Add XOR of text into image
-Add encryption of plain text
+Add XOR of text into image.
+
+Add encryption of plain text.
 
 License
 =======
