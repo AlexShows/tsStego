@@ -11,18 +11,18 @@
 #include <exception>
 #include "lodepng.h"
 
-#define MAP_BINARY_PATH 0x10
+#define MAP_BINARY_PATH 0x1
 
-#define MAP_USING_XOR 0x11
+#define MAP_USING_XOR 0x2
 #define MAP_USING_XOR_STR "using_xor"
 
-#define MAP_OPERATION_TYPE 0x12
+#define MAP_OPERATION_TYPE 0x3
 #define MAP_ENCODE_OPERATION_NAME "encode"
 #define MAP_DECODE_OPERATION_NAME "decode"
 
-#define MAP_PLAINTEXT_FILENAME 0x100
-#define MAP_REF_IMAGE_FILENAME 0x200
-#define MAP_CIPHER_IMAGE_FILENAME 0x210
+#define MAP_PLAINTEXT_FILENAME 0x4
+#define MAP_REF_IMAGE_FILENAME 0x5
+#define MAP_CIPHER_IMAGE_FILENAME 0x6
 
 // Read the plain text file in
 void read_text_file(const char* filename, std::vector<unsigned char>& plaintext)
@@ -200,7 +200,10 @@ void merge_text_into_img_data(std::vector<unsigned char>& text_data, std::vector
 // text_data should be an empty vector, but if it isn't, the data will be appended to the end
 // TODO: Need to fix the passing of NULL for ref_img_data
 // Throws exception on error
-void extract_text_from_img_data(std::vector<unsigned char>& img_data, std::vector<unsigned char>& ref_img_data, std::vector<unsigned char>& text_data, bool using_XOR = false)
+void extract_text_from_img_data(std::vector<unsigned char>& img_data, 
+								std::vector<unsigned char>& ref_img_data, 
+								std::vector<unsigned char>& text_data, 
+								bool using_XOR = false)
 {
 	try
 	{
@@ -263,7 +266,9 @@ void extract_text_from_img_data(std::vector<unsigned char>& img_data, std::vecto
 	}
 }
 
-void capture_args(int argc, char** argv, std::map<unsigned char, std::string>& args_map)
+void capture_args(int argc, char** argv, 
+				std::map<unsigned char, 
+				std::string>& args_map)
 {
 	/******************************************************
 	There are several usages that result in different argument counts:
@@ -293,11 +298,11 @@ void capture_args(int argc, char** argv, std::map<unsigned char, std::string>& a
 		// The first argument is always the absolute path to the binary
 		args_map[MAP_BINARY_PATH] = argv[n];
 
-		// The second argument should always be the operation name 
-		args_map[MAP_OPERATION_TYPE] = argv[n+1];
+		// The second argument shall always be the operation name 
+		args_map[MAP_OPERATION_TYPE] = argv[n + 1];
 
 		// The third _could_ be the xor flag, or it could be a filename
-		if (argv[n+2] == MAP_USING_XOR_STR)
+		if (argv[n + 2] == MAP_USING_XOR_STR)
 		{
 			// Because of the use of XOR, the arg count must be 6 now
 			if (argc < 6)
@@ -311,18 +316,18 @@ void capture_args(int argc, char** argv, std::map<unsigned char, std::string>& a
 		}
 		// ...else we do nothing and the xor flag isn't put into the map
 
-		// The next is a filename that depends on the operation
+		// The next sequence depends on the operation
 		if (args_map[MAP_OPERATION_TYPE] == MAP_ENCODE_OPERATION_NAME)
 		{
-			args_map[MAP_PLAINTEXT_FILENAME] = argv[n+3];
-			args_map[MAP_REF_IMAGE_FILENAME] = argv[n+4];
-			args_map[MAP_CIPHER_IMAGE_FILENAME] = argv[n+5];
+			args_map[MAP_PLAINTEXT_FILENAME] = argv[n + 2];
+			args_map[MAP_REF_IMAGE_FILENAME] = argv[n + 3];
+			args_map[MAP_CIPHER_IMAGE_FILENAME] = argv[n + 4];
 		}
 		else if (args_map[MAP_OPERATION_TYPE] == MAP_DECODE_OPERATION_NAME)
 		{
-			args_map[MAP_CIPHER_IMAGE_FILENAME] = argv[n + 3];
-			args_map[MAP_REF_IMAGE_FILENAME] = argv[n + 4];
-			args_map[MAP_PLAINTEXT_FILENAME] = argv[n + 5];
+			args_map[MAP_CIPHER_IMAGE_FILENAME] = argv[n + 2];
+			args_map[MAP_REF_IMAGE_FILENAME] = argv[n + 3];
+			args_map[MAP_PLAINTEXT_FILENAME] = argv[n + 4];
 		}
 	}
 	catch (...)
@@ -336,7 +341,7 @@ void capture_args(int argc, char** argv, std::map<unsigned char, std::string>& a
 //		- Load the plain text file [ DONE ] 
 //		- Save the image data structure as a new PNG file [ DONE ]
 //		- Save the plain text as a new text file [ DONE ]
-//		- Handle command line input [ IN PROGRESS ]
+//		- Handle command line input [ DONE ]
 //		- Display usage information
 //		- Encipher the plain text 
 //		- Merge the cipher text into the image data structure [ DONE ]
@@ -348,32 +353,30 @@ int main(int argc, char** argv)
 	std::map<unsigned char, std::string>cmd_args;
 	capture_args(argc, argv, cmd_args);
 
-	// Testing the read file function
 	std::vector<unsigned char> plain_text;
-	read_text_file("example.txt", plain_text);
-	/*
-	plain_text[3] = 'F';
-	plain_text[4] = 0x1a;
-	write_text_file("output1.txt", plain_text);
-	*/
-
 	std::vector<unsigned char> img_data;
 	unsigned int h, w;
 
-	read_png_from_file("planet.png", img_data, w, h);
+	// TODO: Add exception handling
 
-	merge_text_into_img_data(plain_text, img_data);
-
-	write_png_to_file("output.png", img_data, w, h);
-
-	// Testing the reading back of the text embedded into the image
 	// TODO: Test the XOR feature
 	std::vector<unsigned char> modified_img_data;
 	std::vector<unsigned char> ref_img_data; // Not using this for now
 	std::vector<unsigned char> modified_text_data;
-	read_png_from_file("output.png", modified_img_data, w, h);
-	extract_text_from_img_data(modified_img_data, ref_img_data, modified_text_data);
-	write_text_file("output.txt", modified_text_data);
-	
+
+	if (cmd_args[MAP_OPERATION_TYPE] == MAP_ENCODE_OPERATION_NAME)
+	{
+		read_text_file(cmd_args[MAP_PLAINTEXT_FILENAME].c_str(), plain_text);
+		read_png_from_file(cmd_args[MAP_REF_IMAGE_FILENAME].c_str(), img_data, w, h);
+		merge_text_into_img_data(plain_text, img_data);
+		write_png_to_file(cmd_args[MAP_CIPHER_IMAGE_FILENAME].c_str(), img_data, w, h);
+	}
+	else if (cmd_args[MAP_OPERATION_TYPE] == MAP_DECODE_OPERATION_NAME)
+	{
+		read_png_from_file(cmd_args[MAP_REF_IMAGE_FILENAME].c_str(), modified_img_data, w, h);
+		extract_text_from_img_data(modified_img_data, ref_img_data, modified_text_data);
+		write_text_file(cmd_args[MAP_PLAINTEXT_FILENAME].c_str(), modified_text_data);
+	}
+		
 	return 0;
 }
