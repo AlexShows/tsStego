@@ -7,8 +7,22 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <map>
 #include <exception>
 #include "lodepng.h"
+
+#define MAP_BINARY_PATH 0x10
+
+#define MAP_USING_XOR 0x11
+#define MAP_USING_XOR_STR "using_xor"
+
+#define MAP_OPERATION_TYPE 0x12
+#define MAP_ENCODE_OPERATION_NAME "encode"
+#define MAP_DECODE_OPERATION_NAME "decode"
+
+#define MAP_PLAINTEXT_FILENAME 0x100
+#define MAP_REF_IMAGE_FILENAME 0x200
+#define MAP_CIPHER_IMAGE_FILENAME 0x210
 
 // Read the plain text file in
 void read_text_file(const char* filename, std::vector<unsigned char>& plaintext)
@@ -249,19 +263,60 @@ void extract_text_from_img_data(std::vector<unsigned char>& img_data, std::vecto
 	}
 }
 
+void capture_args(int argc, char** argv, std::map<unsigned char, std::string>& args_map)
+{
+	/******************************************************
+	There are several usages that result in different argument counts:
+
+		1. .exe encode text ref_img cipher_img
+				This encodes the text file given into a reference image, producing a cipher image
+		2. .exe encode using_xor text ref_img cipher_img
+				This encodes the text file given into a reference image using XOR, producing a cipher image 
+		3. .exe decode cipher_img text
+				This decodes the cipher image, producing a text file 
+		4. .exe decode using_xor cipher_img ref_img text
+				This decodes the cipher image using XOR and the reference image, producing the text
+
+	Thus there could be either 5 or 6 parameters in total, and the order varies depending on the op.
+	********************************************************/ 
+
+	try
+	{
+		// The first argument is always the absolutely path to the binary
+		args_map[MAP_BINARY_PATH] = argv[0];
+
+		// The second argument should always be the operation name 
+		for (int i = 1; i < argc; i++)
+		{
+			if (argv[i] == MAP_USING_XOR_STR)
+				args_map[MAP_USING_XOR] = argv[i];
+			// TODO: Contiue working on this...or scratch the loop and do this 
+			//		more explicitly
+		}
+	}
+	catch (...)
+	{
+		throw std::exception("Exception in capture_args attempting to place the arguments into the argument list.");
+	}
+}
+
 // TODO: 
 //		- Load the PNG file into the image data structure [ DONE ] 
 //		- Load the plain text file [ DONE ] 
 //		- Save the image data structure as a new PNG file [ DONE ]
 //		- Save the plain text as a new text file [ DONE ]
-//		- Handle command line input
+//		- Handle command line input [ IN PROGRESS ]
+//		- Display usage information
 //		- Encipher the plain text 
-//		- Merge the cipher text into the image data structure 
-//		- Load the enciphered PNG file into the enciphered image data structure 
-//		- Extract the cipher text from the enciphered image data structure
+//		- Merge the cipher text into the image data structure [ DONE ]
+//		- Load the enciphered PNG file into the enciphered image data structure [ DONE ] 
+//		- Extract the cipher text from the enciphered image data structure [ DONE ]
 //		- Decipher to plain text 
 int main(int argc, char** argv)
 {
+	std::map<unsigned char, std::string>cmd_args;
+	capture_args(argc, argv, cmd_args);
+
 	// Testing the read file function
 	std::vector<unsigned char> plain_text;
 	read_text_file("example.txt", plain_text);
