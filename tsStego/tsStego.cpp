@@ -26,6 +26,9 @@
 #define MAP_REF_IMAGE_FILENAME 0x5
 #define MAP_CIPHER_IMAGE_FILENAME 0x6
 
+// Prototypes
+void display_usage_info();
+
 // Read the plain text file in
 void read_text_file(const char* filename, std::vector<unsigned char>& plaintext)
 {
@@ -289,7 +292,24 @@ void capture_args(int argc, char** argv,
 				This decodes the cipher image using XOR and the reference image, producing the text
 
 	Thus there could be 4 to 6 parameters in total, and the order varies depending on the op.
+	If there are no parameters provided or just one, the user might be requesting help.
 	********************************************************/ 
+	int n = 0;
+
+	// If invoked with no parameters...
+	if (argc < 2)
+	{
+		display_usage_info();
+		throw std::exception("In capture_args: help requested. No further processing required.");
+	}
+
+	// Or if the second parameter is asking for help...
+	if (argv[n + 1] == "help" || argv[n + 1] == "?" ||
+		argv[n + 1] == "/help" || argv[n + 1] == "/?")
+	{
+		display_usage_info();
+		throw std::exception("In capture_args: help requested. No further processing required.");
+	}
 
 	if (argc < 4)
 	{
@@ -300,19 +320,10 @@ void capture_args(int argc, char** argv,
 	}
 
 	try
-	{
-		int n = 0;
-
+	{		
 		// The first argument is always the absolute path to the binary
 		args_map[MAP_BINARY_PATH] = argv[n];
-
-		if (argv[n + 1] == "help"  || argv[n + 1] == "?" ||
-			argv[n + 1] == "/help" || argv[n + 1] == "/?")
-		{
-			display_usage_info();
-			throw std::exception("In capture_args: help requested. No further processing required.");
-		}
-
+		
 		// The second argument should always be the operation name 
 		args_map[MAP_OPERATION_TYPE] = argv[n + 1];
 
