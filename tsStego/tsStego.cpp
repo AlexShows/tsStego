@@ -120,7 +120,7 @@ void write_png_to_file(const char* filename, std::vector<unsigned char>& image, 
 // We put fewer bits into the Green channel because human eyes are more sensitive to a yellowish-green
 // The using_XOR flag allows the merge to either overwrite the destination bits in the img data, or XOR
 // the source bits (from the text data) with the destination
-// Throws exception on error
+// Throws std::exception on error
 void merge_text_into_img_data(std::vector<unsigned char>& text_data, std::vector<unsigned char>& img_data, bool using_XOR=false)
 {
 	try
@@ -201,7 +201,9 @@ void merge_text_into_img_data(std::vector<unsigned char>& text_data, std::vector
 // ref_img_data can be NULL, but using_XOR must be false if it is
 // text_data should be an empty vector, but if it isn't, the data will be appended to the end
 // TODO: Need to fix the passing of NULL for ref_img_data
-// Throws exception on error
+//		Consider splitting the XOR mode of this function into a separate function
+//		...easier and nicer looking but poor re-use
+// Throws std::exception on error
 void extract_text_from_img_data(std::vector<unsigned char>& img_data, 
 								std::vector<unsigned char>& ref_img_data, 
 								std::vector<unsigned char>& text_data, 
@@ -268,6 +270,8 @@ void extract_text_from_img_data(std::vector<unsigned char>& img_data,
 	}
 }
 
+// Interpret and store arguments
+// Throws a std::exception on an error, or may throw an exception if no further processing is needed
 void capture_args(int argc, char** argv, 
 				std::map<unsigned char, 
 				std::string>& args_map)
@@ -290,6 +294,8 @@ void capture_args(int argc, char** argv,
 	if (argc < 4)
 	{
 		std::cout << "Too few arguments provided. See usage info." << std::endl;
+		std::cout << std::endl;
+		display_usage_info();
 		throw std::exception("In capture_args: too few arguments provided.");
 	}
 
@@ -300,7 +306,14 @@ void capture_args(int argc, char** argv,
 		// The first argument is always the absolute path to the binary
 		args_map[MAP_BINARY_PATH] = argv[n];
 
-		// The second argument shall always be the operation name 
+		if (argv[n + 1] == "help"  || argv[n + 1] == "?" ||
+			argv[n + 1] == "/help" || argv[n + 1] == "/?")
+		{
+			display_usage_info();
+			throw std::exception("In capture_args: help requested. No further processing required.");
+		}
+
+		// The second argument should always be the operation name 
 		args_map[MAP_OPERATION_TYPE] = argv[n + 1];
 
 		// The third _could_ be the xor flag, or it could be a filename
@@ -339,17 +352,6 @@ void capture_args(int argc, char** argv,
 
 void display_usage_info()
 {
-	/******************************************************
-	1. .exe encode text ref_img cipher_img
-	This encodes the text file given into a reference image, producing a cipher image
-	2. .exe encode using_xor text ref_img cipher_img
-	This encodes the text file given into a reference image using XOR, producing a cipher image
-	3. .exe decode cipher_img text
-	This decodes the cipher image, producing a text file
-	4. .exe decode using_xor cipher_img ref_img text
-	This decodes the cipher image using XOR and the reference image, producing the text
-	********************************************************/
-
 	std::cout << std::endl;
 	std::cout << "USAGE EXAMPLES" << std::endl;
 	std::cout << "--------------" << std::endl;
@@ -365,7 +367,8 @@ void display_usage_info()
 	std::cout << "Decode a text file from an image (using XOR):" << std::endl;
 	std::cout << "/ttsStego.exe decode using_xor cipher_img ref_img textfile" << std::endl;
 	std::cout << std::endl;
-	std::cout << "Where:" << std::endl;
+	std::cout << "GLOSSARY" << std::endl;
+	std::cout << "--------" << std::endl;
 	std::cout << "/tencode means to take the text from the text file and create a new cipher image" << std::endl;
 	std::cout << "/t/t from a reference image with the text embedded in it." << std::endl;
 	std::cout << "/tdecode means to extract the text from a cipher image and create a new text file" << std::endl;
@@ -392,42 +395,64 @@ void display_about_info()
 //		- Save the image data structure as a new PNG file [ DONE ]
 //		- Save the plain text as a new text file [ DONE ]
 //		- Handle command line input [ DONE ]
-//		- Display usage information
-//		- Encipher the plain text 
+//		- Display usage information [ DONE ]
 //		- Merge the cipher text into the image data structure [ DONE ]
 //		- Load the enciphered PNG file into the enciphered image data structure [ DONE ] 
 //		- Extract the cipher text from the enciphered image data structure [ DONE ]
+//		- Encipher from plain text 
 //		- Decipher to plain text 
 int main(int argc, char** argv)
 {
 	display_about_info();
 
 	std::map<unsigned char, std::string>cmd_args;
-	capture_args(argc, argv, cmd_args);
 
+	try
+	{
+		capture_args(argc, argv, cmd_args);
+	}
+	catch (std::exception e)
+	{
+		std::cout << e.what() << std::endl;
+		return -1;
+	}
+	
 	std::vector<unsigned char> plain_text;
 	std::vector<unsigned char> img_data;
 	unsigned int h, w;
-
-	// TODO: Add exception handling
 
 	// TODO: Test the XOR feature
 	std::vector<unsigned char> modified_img_data;
 	std::vector<unsigned char> ref_img_data; // Not using this for now
 	std::vector<unsigned char> modified_text_data;
-
+	
 	if (cmd_args[MAP_OPERATION_TYPE] == MAP_ENCODE_OPERATION_NAME)
 	{
-		read_text_file(cmd_args[MAP_PLAINTEXT_FILENAME].c_str(), plain_text);
-		read_png_from_file(cmd_args[MAP_REF_IMAGE_FILENAME].c_str(), img_data, w, h);
-		merge_text_into_img_data(plain_text, img_data);
-		write_png_to_file(cmd_args[MAP_CIPHER_IMAGE_FILENAME].c_str(), img_data, w, h);
+		try
+		{
+			read_text_file(cmd_args[MAP_PLAINTEXT_FILENAME].c_str(), plain_text);
+			read_png_from_file(cmd_args[MAP_REF_IMAGE_FILENAME].c_str(), img_data, w, h);
+			merge_text_into_img_data(plain_text, img_data);
+			write_png_to_file(cmd_args[MAP_CIPHER_IMAGE_FILENAME].c_str(), img_data, w, h);
+		}
+		catch (std::exception e)
+		{
+			std::cout << e.what() << std::endl;
+		}
+		
 	}
 	else if (cmd_args[MAP_OPERATION_TYPE] == MAP_DECODE_OPERATION_NAME)
 	{
-		read_png_from_file(cmd_args[MAP_REF_IMAGE_FILENAME].c_str(), modified_img_data, w, h);
-		extract_text_from_img_data(modified_img_data, ref_img_data, modified_text_data);
-		write_text_file(cmd_args[MAP_PLAINTEXT_FILENAME].c_str(), modified_text_data);
+		try
+		{
+			read_png_from_file(cmd_args[MAP_REF_IMAGE_FILENAME].c_str(), modified_img_data, w, h);
+			extract_text_from_img_data(modified_img_data, ref_img_data, modified_text_data);
+			write_text_file(cmd_args[MAP_PLAINTEXT_FILENAME].c_str(), modified_text_data);
+		}
+		catch (std::exception e)
+		{
+			std::cout << e.what() << std::endl;
+		}
 	}
 		
 	return 0;
