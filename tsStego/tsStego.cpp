@@ -445,6 +445,12 @@ int main(int argc, char** argv)
 	
 	if (cmd_args[MAP_OPERATION_TYPE] == MAP_ENCODE_OPERATION_NAME)
 	{
+		std::cout << std::endl;
+		std::cout << "Encoding " << cmd_args[MAP_PLAINTEXT_FILENAME].c_str() << " into ";
+		std::cout << cmd_args[MAP_REF_IMAGE_FILENAME].c_str() << std::endl;
+		std::cout << "to produce the output file: " << cmd_args[MAP_CIPHER_IMAGE_FILENAME].c_str() << std::endl;
+		std::cout << std::endl;
+
 		try
 		{
 			read_text_file(cmd_args[MAP_PLAINTEXT_FILENAME].c_str(), plain_text);
@@ -460,6 +466,11 @@ int main(int argc, char** argv)
 	}
 	else if (cmd_args[MAP_OPERATION_TYPE] == MAP_DECODE_OPERATION_NAME)
 	{
+		std::cout << std::endl;
+		std::cout << "Decoding " << cmd_args[MAP_CIPHER_IMAGE_FILENAME].c_str() << std::endl;
+		std::cout << "to produce the output file: " << cmd_args[MAP_PLAINTEXT_FILENAME].c_str() << std::endl;
+		std::cout << std::endl;
+
 		try
 		{
 			read_png_from_file(cmd_args[MAP_REF_IMAGE_FILENAME].c_str(), modified_img_data, w, h);
