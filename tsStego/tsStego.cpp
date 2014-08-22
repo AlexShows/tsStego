@@ -11,6 +11,8 @@
 #include <exception>
 #include "lodepng.h"
 
+#define STEGO_VERSION_STRING "0.1.1"
+
 #define MAP_BINARY_PATH 0x1
 
 #define MAP_USING_XOR 0x2
@@ -282,10 +284,10 @@ void capture_args(int argc, char** argv,
 		4. .exe decode using_xor cipher_img ref_img text
 				This decodes the cipher image using XOR and the reference image, producing the text
 
-	Thus there could be either 5 or 6 parameters in total, and the order varies depending on the op.
+	Thus there could be 4 to 6 parameters in total, and the order varies depending on the op.
 	********************************************************/ 
 
-	if (argc < 5)
+	if (argc < 4)
 	{
 		std::cout << "Too few arguments provided. See usage info." << std::endl;
 		throw std::exception("In capture_args: too few arguments provided.");
@@ -326,14 +328,62 @@ void capture_args(int argc, char** argv,
 		else if (args_map[MAP_OPERATION_TYPE] == MAP_DECODE_OPERATION_NAME)
 		{
 			args_map[MAP_CIPHER_IMAGE_FILENAME] = argv[n + 2];
-			args_map[MAP_REF_IMAGE_FILENAME] = argv[n + 3];
-			args_map[MAP_PLAINTEXT_FILENAME] = argv[n + 4];
+			args_map[MAP_PLAINTEXT_FILENAME] = argv[n + 3];
 		}
 	}
 	catch (...)
 	{
 		throw std::exception("Exception in capture_args attempting to place the arguments into the argument list.");
 	}
+}
+
+void display_usage_info()
+{
+	/******************************************************
+	1. .exe encode text ref_img cipher_img
+	This encodes the text file given into a reference image, producing a cipher image
+	2. .exe encode using_xor text ref_img cipher_img
+	This encodes the text file given into a reference image using XOR, producing a cipher image
+	3. .exe decode cipher_img text
+	This decodes the cipher image, producing a text file
+	4. .exe decode using_xor cipher_img ref_img text
+	This decodes the cipher image using XOR and the reference image, producing the text
+	********************************************************/
+
+	std::cout << std::endl;
+	std::cout << "USAGE EXAMPLES" << std::endl;
+	std::cout << "--------------" << std::endl;
+	std::cout << "Encode a text file into an image (without using XOR):" << std::endl;
+	std::cout << "/ttsStego.exe encode textfile ref_img cipher_img" << std::endl;
+	std::cout << std::endl;
+	std::cout << "Encode a text file into an image (using XOR):" << std::endl;
+	std::cout << "/ttsStego.exe encode using_xor textfile ref_img cipher_img" << std::endl;
+	std::cout << std::endl;
+	std::cout << "Decode a text file from an image (without using XOR):" << std::endl;
+	std::cout << "/ttsStego.exe decode cipher_img textfile" << std::endl;
+	std::cout << std::endl;
+	std::cout << "Decode a text file from an image (using XOR):" << std::endl;
+	std::cout << "/ttsStego.exe decode using_xor cipher_img ref_img textfile" << std::endl;
+	std::cout << std::endl;
+	std::cout << "Where:" << std::endl;
+	std::cout << "/tencode means to take the text from the text file and create a new cipher image" << std::endl;
+	std::cout << "/t/t from a reference image with the text embedded in it." << std::endl;
+	std::cout << "/tdecode means to extract the text from a cipher image and create a new text file" << std::endl;
+	std::cout << "/tusing_xor determines whether or not the encoded bits replace the original bits" << std::endl;
+	std::cout << "/t/tor if they are a bitwise logical XOR with the original bits. Using XOR provides" << std::endl;
+	std::cout << "/t/tan additional level of obscurity, but it requires the original image in addition" << std::endl;
+	std::cout << "/t/tto the cipher image in order to decode the text." << std::endl;
+	std::cout << "/ttextfile is the filename of a text file to be either encoded from or decoded to" << std::endl;
+	std::cout << "/tref_img is the filename of a PNG format image to be used as a reference" << std::endl;
+	std::cout << "/tcipher_img is the filename of a PNG format image to be encoded into or decoded from" << std::endl;
+	std::cout << std::endl;
+}
+
+void display_about_info()
+{
+	std::cout << "tsStego version " << STEGO_VERSION_STRING << std::endl;
+	std::cout << "Written by Alex Shows" << std::endl;
+	std::cout << "PNG support provided by Lode Vandevenne" << std::endl;
 }
 
 // TODO: 
@@ -350,6 +400,8 @@ void capture_args(int argc, char** argv,
 //		- Decipher to plain text 
 int main(int argc, char** argv)
 {
+	display_about_info();
+
 	std::map<unsigned char, std::string>cmd_args;
 	capture_args(argc, argv, cmd_args);
 
