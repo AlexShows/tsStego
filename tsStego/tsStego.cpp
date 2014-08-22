@@ -367,29 +367,35 @@ void display_usage_info()
 	std::cout << "USAGE EXAMPLES" << std::endl;
 	std::cout << "--------------" << std::endl;
 	std::cout << "Encode a text file into an image (without using XOR):" << std::endl;
-	std::cout << "/ttsStego.exe encode textfile ref_img cipher_img" << std::endl;
+	std::cout << "\ttsStego.exe encode textfile ref_img cipher_img" << std::endl;
 	std::cout << std::endl;
 	std::cout << "Encode a text file into an image (using XOR):" << std::endl;
-	std::cout << "/ttsStego.exe encode using_xor textfile ref_img cipher_img" << std::endl;
+	std::cout << "\ttsStego.exe encode using_xor textfile ref_img cipher_img" << std::endl;
 	std::cout << std::endl;
 	std::cout << "Decode a text file from an image (without using XOR):" << std::endl;
-	std::cout << "/ttsStego.exe decode cipher_img textfile" << std::endl;
+	std::cout << "\ttsStego.exe decode cipher_img textfile" << std::endl;
 	std::cout << std::endl;
 	std::cout << "Decode a text file from an image (using XOR):" << std::endl;
-	std::cout << "/ttsStego.exe decode using_xor cipher_img ref_img textfile" << std::endl;
+	std::cout << "\ttsStego.exe decode using_xor cipher_img ref_img textfile" << std::endl;
 	std::cout << std::endl;
 	std::cout << "GLOSSARY" << std::endl;
 	std::cout << "--------" << std::endl;
-	std::cout << "/tencode means to take the text from the text file and create a new cipher image" << std::endl;
-	std::cout << "/t/t from a reference image with the text embedded in it." << std::endl;
-	std::cout << "/tdecode means to extract the text from a cipher image and create a new text file" << std::endl;
-	std::cout << "/tusing_xor determines whether or not the encoded bits replace the original bits" << std::endl;
-	std::cout << "/t/tor if they are a bitwise logical XOR with the original bits. Using XOR provides" << std::endl;
-	std::cout << "/t/tan additional level of obscurity, but it requires the original image in addition" << std::endl;
-	std::cout << "/t/tto the cipher image in order to decode the text." << std::endl;
-	std::cout << "/ttextfile is the filename of a text file to be either encoded from or decoded to" << std::endl;
-	std::cout << "/tref_img is the filename of a PNG format image to be used as a reference" << std::endl;
-	std::cout << "/tcipher_img is the filename of a PNG format image to be encoded into or decoded from" << std::endl;
+	std::cout << "\"encode\" means take the text from the text file and create a new cipher" << std::endl;
+	std::cout << "\timage from a reference image with the text embedded in it." << std::endl;
+	std::cout << std::endl;
+	std::cout << "\"decode\" means extract text from a cipher image and create a text file" << std::endl;
+	std::cout << std::endl;
+	std::cout << "\"using_xor\" determines whether or not the encoded bits replace the" << std::endl;
+	std::cout << "\toriginal bits or if they are a bitwise logical XOR with the original" << std::endl;
+	std::cout << "\tbits. Using XOR provides an additional level of obscurity, but it" << std::endl;
+	std::cout << "\trequires the original image in addition to the cipher image in order" << std::endl;
+	std::cout << "\tto decode the text." << std::endl;
+	std::cout << std::endl;
+	std::cout << "\"textfile\" is the filename of a text file for encode or decode to/from" << std::endl;
+	std::cout << std::endl;
+	std::cout << "\"ref_img\" is the filename of a PNG image to be used as a reference" << std::endl;
+	std::cout << std::endl;
+	std::cout << "\"cipher_img\" is the filename of a PNG image for encode or decode to/from" << std::endl;
 	std::cout << std::endl;
 }
 
@@ -424,7 +430,7 @@ int main(int argc, char** argv)
 	}
 	catch (std::exception e)
 	{
-		std::cout << e.what() << std::endl;
+		//std::cout << e.what() << std::endl;
 		return -1;
 	}
 	
@@ -465,6 +471,7 @@ int main(int argc, char** argv)
 			std::cout << e.what() << std::endl;
 		}
 	}
-		
+	
+	std::cout << "End of program execution." << std::endl;
 	return 0;
 }
