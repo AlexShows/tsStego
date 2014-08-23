@@ -11,7 +11,7 @@
 #include <exception>
 #include "lodepng.h"
 
-#define STEGO_VERSION_STRING "0.1.1"
+#define STEGO_VERSION_STRING "0.1.2"
 
 #define MAP_BINARY_PATH 0x1
 
@@ -428,7 +428,7 @@ int main(int argc, char** argv)
 	{
 		capture_args(argc, argv, cmd_args);
 	}
-	catch (std::exception e)
+	catch (std::exception const& e)
 	{
 		//std::cout << e.what() << std::endl;
 		return -1;
@@ -458,7 +458,7 @@ int main(int argc, char** argv)
 			merge_text_into_img_data(plain_text, img_data);
 			write_png_to_file(cmd_args[MAP_CIPHER_IMAGE_FILENAME].c_str(), img_data, w, h);
 		}
-		catch (std::exception e)
+		catch (std::exception const& e)
 		{
 			std::cout << e.what() << std::endl;
 		}
@@ -477,7 +477,7 @@ int main(int argc, char** argv)
 			extract_text_from_img_data(modified_img_data, ref_img_data, modified_text_data);
 			write_text_file(cmd_args[MAP_PLAINTEXT_FILENAME].c_str(), modified_text_data);
 		}
-		catch (std::exception e)
+		catch (std::exception const& e)
 		{
 			std::cout << e.what() << std::endl;
 		}
