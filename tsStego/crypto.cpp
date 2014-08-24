@@ -62,10 +62,12 @@ void openssl_blowfish_encrypt(std::string key_string,
 		for (int j = 0; j < BF_CHUNK_SIZE; j++)
 			input_chunk[j] = input[i + j];
 
-		BF_cfb64_encrypt(input_chunk, output_chunk, BF_CHUNK_SIZE, &key, iv, &num, BF_ENCRYPT);
+		BF_cbc_encrypt(input_chunk, output_chunk, BF_CHUNK_SIZE, &key, iv, BF_ENCRYPT);
+		//BF_cfb64_encrypt(input_chunk, output_chunk, BF_CHUNK_SIZE, &key, iv, &num, BF_ENCRYPT);
 
 		for (int k = 0; k < BF_CHUNK_SIZE; k++)
 			output.push_back(output_chunk[k]);
+
 	}
 
 	// Now if we have any input leftover, encrypt it as well
@@ -117,10 +119,12 @@ void openssl_blowfish_decrypt(std::string key_string,
 		for (int j = 0; j < BF_CHUNK_SIZE; j++)
 			input_chunk[j] = input[i + j];
 
-		BF_cfb64_encrypt(input_chunk, output_chunk, BF_CHUNK_SIZE, &key, iv, &num, BF_DECRYPT);
+		BF_cbc_encrypt(input_chunk, output_chunk, BF_CHUNK_SIZE, &key, iv, BF_DECRYPT);
+		//BF_cfb64_encrypt(input_chunk, output_chunk, BF_CHUNK_SIZE, &key, iv, &num, BF_DECRYPT);
 
 		for (int k = 0; k < BF_CHUNK_SIZE; k++)
 			output.push_back(output_chunk[k]);
+
 	}
 
 	// Now if we have any input leftover, encrypt it as well
