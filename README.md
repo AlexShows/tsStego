@@ -19,3 +19,5 @@ License
 Simple Stegonography is released under the MIT License:  
 
 http://opensource.org/licenses/MIT
+
+...except when documented in source otherwise. Currently experimenting with OpenSSL, but have not redistributed any components of it or reproduced any herein (just references to them and abstractions that call functions in the API). 
