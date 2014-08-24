@@ -44,6 +44,15 @@ void openssl_blowfish_encrypt(std::string key_string,
 	delete cucp_key;
 
 	// Working on 64-bit chunks at a time
+	
+	/**************************************
+				IMPORTANT IMPORTANT
+	Looks like many Stack Overflow answers show folks are doing 
+	a giant memory chunk rather thank splitting this up? 
+	Try to use a single large chunk of memory with the CFB, 
+	then if that doesn't work go back to CBC
+	***************************************/
+	/*
 	unsigned int input_size = input.size(); // might need padding
 	unsigned int input_chunk_count = input_size / BF_CHUNK_SIZE; // 64-bit chunks
 	unsigned int last_chunk_byte_count = input_size % BF_CHUNK_SIZE;
@@ -78,7 +87,17 @@ void openssl_blowfish_encrypt(std::string key_string,
 
 	std::cout << "Encrypted " << input_chunk_count << " 8-byte chunks and " 
 		<< last_chunk_byte_count << " additional bytes using BF_cfb64_encrypt." << std::endl;
+	*/
 
+	unsigned char * pIN = new unsigned char[input.size()];
+	unsigned char * pOUT = new unsigned char[input.size()];
+	BF_cbc_encrypt(pIN, pOUT, input.size(), &key, iv, BF_ENCRYPT);
+
+	for (int j = 0; j < input.size(); j++)
+		output.push_back(pOUT[j]);
+
+	delete pIN;
+	delete pOUT;
 }
 
 void openssl_blowfish_decrypt(std::string key_string, 
@@ -99,7 +118,7 @@ void openssl_blowfish_decrypt(std::string key_string,
 	BF_set_key(&key, key_string.size(), cucp_key);
 
 	delete cucp_key;
-
+	/*
 	// Working on 64-bit chunks at a time
 	unsigned int input_size = input.size(); // might need padding
 	unsigned int input_chunk_count = input_size / BF_CHUNK_SIZE; // 64-bit chunks
@@ -135,6 +154,18 @@ void openssl_blowfish_decrypt(std::string key_string,
 
 	std::cout << "Decrypted " << input_chunk_count << " 8-byte chunks and "
 		<< last_chunk_byte_count << " additional bytes using BF_cfb64_encrypt." << std::endl;
+
+	*/
+
+	unsigned char * pIN = new unsigned char[input.size()];
+	unsigned char * pOUT = new unsigned char[input.size()];
+	BF_cbc_encrypt(pIN, pOUT, input.size(), &key, iv, BF_DECRYPT);
+
+	for (int j = 0; j < input.size(); j++)
+		output.push_back(pOUT[j]);
+
+	delete pIN;
+	delete pOUT;
 }
 
 void BF_test()
