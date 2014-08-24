@@ -31,8 +31,8 @@ void openssl_blowfish_encrypt(std::string key_string,
 
 	// Initialization vector
 	unsigned char iv[BF_IVECTOR_SIZE];
-	for (int i = 0; i < BF_IVECTOR_SIZE; i++) 
-		iv[i] = 'i'; // TODO: make this more secure; for now using "i"s
+	for (int s = 0; s < BF_IVECTOR_SIZE; s++) 
+		iv[s] = 'i'; // TODO: make this more secure; for now using "i"s
 
 	// Type matching exercise
 	const unsigned char * cucp_key = new unsigned char[key_string.size()];
@@ -59,10 +59,13 @@ void openssl_blowfish_encrypt(std::string key_string,
 	// For each chunk, store the BF_CHUNK_SIZE
 	for (int i = 0; i < input_chunk_count; i++)
 	{
-		for (int j = 0; i < BF_CHUNK_SIZE; j++)
+		for (int j = 0; j < BF_CHUNK_SIZE; j++)
 			input_chunk[j] = input[i + j];
 
 		BF_cfb64_encrypt(input_chunk, output_chunk, BF_CHUNK_SIZE, &key, iv, &num, BF_ENCRYPT);
+
+		for (int k = 0; k < BF_CHUNK_SIZE; k++)
+			output.push_back(output_chunk[k]);
 	}
 
 	// Now if we have any input leftover, encrypt it as well
@@ -82,8 +85,8 @@ void openssl_blowfish_decrypt(std::string key_string,
 {
 	// Initialization vector
 	unsigned char iv[BF_IVECTOR_SIZE];
-	for (int i = 0; i < BF_IVECTOR_SIZE; i++)
-		iv[i] = 'i'; // TODO: make this more secure; for now using "i"s
+	for (int s = 0; s < BF_IVECTOR_SIZE; s++)
+		iv[s] = 'i'; // TODO: make this more secure; for now using "i"s
 
 
 	// Type matching exercise
@@ -111,10 +114,13 @@ void openssl_blowfish_decrypt(std::string key_string,
 	// For each chunk, store the BF_CHUNK_SIZE
 	for (int i = 0; i < input_chunk_count; i++)
 	{
-		for (int j = 0; i < BF_CHUNK_SIZE; j++)
+		for (int j = 0; j < BF_CHUNK_SIZE; j++)
 			input_chunk[j] = input[i + j];
 
 		BF_cfb64_encrypt(input_chunk, output_chunk, BF_CHUNK_SIZE, &key, iv, &num, BF_DECRYPT);
+
+		for (int k = 0; k < BF_CHUNK_SIZE; k++)
+			output.push_back(output_chunk[k]);
 	}
 
 	// Now if we have any input leftover, encrypt it as well
