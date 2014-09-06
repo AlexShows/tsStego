@@ -41,18 +41,17 @@ void openssl_blowfish_encrypt(std::string key_string,
 	BF_KEY key = { 0 };
 	BF_set_key(&key, key_string.size(), cucp_key);
 
-	delete cucp_key;
+	unsigned char* input_array = new unsigned char[input.size()];
+	unsigned char* output_array = new unsigned char[input.size()];
 
+	BF_cbc_encrypt(input_array, output_array, input.size(), &key, iv, BF_ENCRYPT);
+	for (int i = 0; i < input.size(); i++)
+		output.push_back(output_array[i]);
+
+	delete input_array;
+	delete output_array;
+/*
 	// Working on 64-bit chunks at a time
-	
-	/**************************************
-				IMPORTANT IMPORTANT
-	Looks like many Stack Overflow answers show folks are doing 
-	a giant memory chunk rather thank splitting this up? 
-	Try to use a single large chunk of memory with the CFB, 
-	then if that doesn't work go back to CBC
-	***************************************/
-	/*
 	unsigned int input_size = input.size(); // might need padding
 	unsigned int input_chunk_count = input_size / BF_CHUNK_SIZE; // 64-bit chunks
 	unsigned int last_chunk_byte_count = input_size % BF_CHUNK_SIZE;
@@ -76,7 +75,6 @@ void openssl_blowfish_encrypt(std::string key_string,
 
 		for (int k = 0; k < BF_CHUNK_SIZE; k++)
 			output.push_back(output_chunk[k]);
-
 	}
 
 	// Now if we have any input leftover, encrypt it as well
@@ -87,17 +85,8 @@ void openssl_blowfish_encrypt(std::string key_string,
 
 	std::cout << "Encrypted " << input_chunk_count << " 8-byte chunks and " 
 		<< last_chunk_byte_count << " additional bytes using BF_cfb64_encrypt." << std::endl;
-	*/
-
-	unsigned char * pIN = new unsigned char[input.size()];
-	unsigned char * pOUT = new unsigned char[input.size()];
-	BF_cbc_encrypt(pIN, pOUT, input.size(), &key, iv, BF_ENCRYPT);
-
-	for (int j = 0; j < input.size(); j++)
-		output.push_back(pOUT[j]);
-
-	delete pIN;
-	delete pOUT;
+*/
+	delete cucp_key;
 }
 
 void openssl_blowfish_decrypt(std::string key_string, 
@@ -109,16 +98,9 @@ void openssl_blowfish_decrypt(std::string key_string,
 	for (int s = 0; s < BF_IVECTOR_SIZE; s++)
 		iv[s] = 'i'; // TODO: make this more secure; for now using "i"s
 
-
 	// Type matching exercise
 	const unsigned char * cucp_key = new unsigned char[key_string.size()];
-
-	// Init the blowfish key based on the string provided
-	BF_KEY key = { 0 };
-	BF_set_key(&key, key_string.size(), cucp_key);
-
-	delete cucp_key;
-	/*
+			
 	// Working on 64-bit chunks at a time
 	unsigned int input_size = input.size(); // might need padding
 	unsigned int input_chunk_count = input_size / BF_CHUNK_SIZE; // 64-bit chunks
@@ -132,6 +114,21 @@ void openssl_blowfish_decrypt(std::string key_string,
 	if (!input_size)
 		return;
 
+	unsigned char* input_array = new unsigned char[input.size()];
+	unsigned char* output_array = new unsigned char[input.size()];
+
+	// Init the blowfish key based on the string provided
+	BF_KEY key = { 0 };
+	BF_set_key(&key, key_string.size(), cucp_key);
+
+	BF_cbc_encrypt(input_array, output_array, input.size(), &key, iv, BF_DECRYPT);
+	for (int i = 0; i < input.size(); i++)
+		output.push_back(output_array[i]);
+
+	delete input_array;
+	delete output_array;
+
+/*
 	// For each chunk, store the BF_CHUNK_SIZE
 	for (int i = 0; i < input_chunk_count; i++)
 	{
@@ -143,7 +140,6 @@ void openssl_blowfish_decrypt(std::string key_string,
 
 		for (int k = 0; k < BF_CHUNK_SIZE; k++)
 			output.push_back(output_chunk[k]);
-
 	}
 
 	// Now if we have any input leftover, encrypt it as well
@@ -154,18 +150,8 @@ void openssl_blowfish_decrypt(std::string key_string,
 
 	std::cout << "Decrypted " << input_chunk_count << " 8-byte chunks and "
 		<< last_chunk_byte_count << " additional bytes using BF_cfb64_encrypt." << std::endl;
-
-	*/
-
-	unsigned char * pIN = new unsigned char[input.size()];
-	unsigned char * pOUT = new unsigned char[input.size()];
-	BF_cbc_encrypt(pIN, pOUT, input.size(), &key, iv, BF_DECRYPT);
-
-	for (int j = 0; j < input.size(); j++)
-		output.push_back(pOUT[j]);
-
-	delete pIN;
-	delete pOUT;
+*/
+	delete cucp_key;
 }
 
 void BF_test()
