@@ -33,7 +33,6 @@ void openssl_aes_encrypt(std::string key_string,
 	try
 	{
 		unsigned int key_string_size_bytes = key_string.size();
-		unsigned int key_string_size_bits = key_string_size_bytes * 8;
 
 		unsigned char* key_array = new unsigned char[key_string_size_bytes];
 		memset(key_array, 0, key_string_size_bytes);
@@ -47,11 +46,13 @@ void openssl_aes_encrypt(std::string key_string,
 		unsigned char ivec[] = IVEC_STRING;
 
 		AES_KEY key;
-		AES_set_encrypt_key(key_array, key_string_size_bits, &key);
+		AES_set_encrypt_key(key_array, 128, &key);
 		int num = 0;
 
 		unsigned char* input_array = new unsigned char[input.size()];
 		unsigned char* output_array = new unsigned char[input.size()];
+		memset(input_array, 0, input.size());
+		memset(output_array, 0, input.size());
 
 		std::vector<unsigned char>::iterator it = input.begin();
 		int i = 0;
@@ -95,7 +96,6 @@ void openssl_aes_decrypt(std::string key_string,
 	try
 	{
 		unsigned int key_string_size_bytes = key_string.size();
-		unsigned int key_string_size_bits = key_string_size_bytes * 8;
 
 		unsigned char* key_array = new unsigned char[key_string_size_bytes];
 		memset(key_array, 0, key_string_size_bytes);
@@ -114,6 +114,8 @@ void openssl_aes_decrypt(std::string key_string,
 
 		unsigned char* input_array = new unsigned char[input.size()];
 		unsigned char* output_array = new unsigned char[input.size()];
+		memset(input_array, 0, input.size());
+		memset(output_array, 0, input.size());
 
 		std::vector<unsigned char>::iterator it = input.begin();
 		int i = 0;

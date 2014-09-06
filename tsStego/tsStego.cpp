@@ -11,7 +11,7 @@
 #include <exception>
 #include "lodepng.h"
 
-#define STEGO_VERSION_STRING "0.2.0"
+#define STEGO_VERSION_STRING "0.2.1"
 
 #define MAP_BINARY_PATH 0x1
 
@@ -26,7 +26,15 @@
 #define MAP_REF_IMAGE_FILENAME 0x5
 #define MAP_CIPHER_IMAGE_FILENAME 0x6
 
-void display_usage_info(); 
+void display_usage_info();
+
+// From crypto.cpp:
+void openssl_aes_encrypt(std::string key_string,
+	std::vector<unsigned char>& input,
+	std::vector<unsigned char>& output);
+void openssl_aes_decrypt(std::string key_string,
+	std::vector<unsigned char>& input,
+	std::vector<unsigned char>& output);
 
 // Read the plain text file in
 void read_text_file(const char* filename, std::vector<unsigned char>& plaintext)
@@ -268,6 +276,8 @@ void extract_text_from_img_data(std::vector<unsigned char>& img_data,
 			break;
 		}
 		
+		// TODO: Fix the EOF character search above. An encrypted file may (and does in our test case)
+		//		include a byte of 0x1a after encryption. Need a better way to encode the length of the message.
 		index++;
 	}
 }
@@ -415,8 +425,8 @@ void display_about_info()
 //		- Merge the cipher text into the image data structure [ DONE ]
 //		- Load the enciphered PNG file into the enciphered image data structure [ DONE ] 
 //		- Extract the cipher text from the enciphered image data structure [ DONE ]
-//		- Encipher from plain text 
-//		- Decipher to plain text 
+//		- Encipher from plain text [ DONE ]
+//		- Decipher to plain text [ DONE ]
 int main(int argc, char** argv)
 {
 	display_about_info();
@@ -434,6 +444,7 @@ int main(int argc, char** argv)
 	}
 	
 	std::vector<unsigned char> plain_text;
+	std::vector<unsigned char> cypher_text;
 	std::vector<unsigned char> img_data;
 	unsigned int h, w;
 
@@ -453,8 +464,11 @@ int main(int argc, char** argv)
 		try
 		{
 			read_text_file(cmd_args[MAP_PLAINTEXT_FILENAME].c_str(), plain_text);
+			// TODO: Add a command line option to get this key from the user; don't just make it up here
+			// ALSO: This is an optional step. Make it so.
+			openssl_aes_encrypt("thisismysupersecretkeythateverybodyloves", plain_text, cypher_text);
 			read_png_from_file(cmd_args[MAP_REF_IMAGE_FILENAME].c_str(), img_data, w, h);
-			merge_text_into_img_data(plain_text, img_data);
+			merge_text_into_img_data(cypher_text, img_data);
 			write_png_to_file(cmd_args[MAP_CIPHER_IMAGE_FILENAME].c_str(), img_data, w, h);
 		}
 		catch (std::exception const& e)
@@ -472,8 +486,15 @@ int main(int argc, char** argv)
 
 		try
 		{
-			read_png_from_file(cmd_args[MAP_REF_IMAGE_FILENAME].c_str(), modified_img_data, w, h);
-			extract_text_from_img_data(modified_img_data, ref_img_data, modified_text_data);
+			read_png_from_file(cmd_args[MAP_CIPHER_IMAGE_FILENAME].c_str(), modified_img_data, w, h);
+			// TODO: FIX this bug...the EOF doesn't survive encryption. Need some kind of out of band key,
+			//		or otherwise something that survives encrypt in a way that extraction of decrypted
+			//		stuff works. Maybe add an encrypted character count or something to the beginning of 
+			//		the cipher text? Need to read up on how others solve this.
+			extract_text_from_img_data(modified_img_data, ref_img_data, cypher_text);
+			// TODO: Add a command line option to get this key from the user; don't just make it up here
+			// ALSO: This is an optional step. Make it so.
+			openssl_aes_decrypt("thisismysupersecretkeythateverybodyloves", cypher_text, modified_text_data);
 			write_text_file(cmd_args[MAP_PLAINTEXT_FILENAME].c_str(), modified_text_data);
 		}
 		catch (std::exception const& e)
