@@ -11,7 +11,7 @@
 #include <exception>
 #include "lodepng.h"
 
-#define STEGO_VERSION_STRING "0.1.3"
+#define STEGO_VERSION_STRING "0.2.0"
 
 #define MAP_BINARY_PATH 0x1
 
@@ -26,9 +26,7 @@
 #define MAP_REF_IMAGE_FILENAME 0x5
 #define MAP_CIPHER_IMAGE_FILENAME 0x6
 
-// Prototypes
-void BF_test(); // From crypto.cpp
-void display_usage_info(); // from here
+void display_usage_info(); 
 
 // Read the plain text file in
 void read_text_file(const char* filename, std::vector<unsigned char>& plaintext)
@@ -421,8 +419,6 @@ void display_about_info()
 //		- Decipher to plain text 
 int main(int argc, char** argv)
 {
-	BF_test();
-
 	display_about_info();
 
 	std::map<unsigned char, std::string>cmd_args;
