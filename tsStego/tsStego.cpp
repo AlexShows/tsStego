@@ -147,8 +147,12 @@ void merge_text_into_img_data(std::vector<unsigned char>& text_data, std::vector
 		throw std::exception("Exception in merge_text_into_img_data: possible invalid reference to image or text data");
 	}
 
-	// Add an EOF tag so the extraction knows when to stop
-	text_data.push_back(0x1a);
+	// The first 4 bytes of the encoded data become the size of that data
+	// so we perform that insertion here
+	unsigned int text_size_bytes = text_data.size();
+	unsigned char text_size_bytes_uc[4] = { 0 };
+	memcpy(text_size_bytes_uc, &text_size_bytes, 4);
+	text_data.insert(text_data.begin(), text_size_bytes_uc, text_size_bytes_uc+4);
 
 	unsigned char tmp = 0;
 	unsigned int img_index = 0;
@@ -237,12 +241,29 @@ void extract_text_from_img_data(std::vector<unsigned char>& img_data,
 	unsigned char tmp = 0;
 	unsigned char reconstruct = 0;
 	unsigned int index = 0;
+	unsigned int size_in_bytes = 0;
 	bool finished = false;
 
 	// Loop through all the color channels of all the pixels
 	for (auto& p : img_data)
 	{
-		if (finished)
+		// Once we have the first 4 bytes, then we can determine the actual size of the output
+		// text file
+		if (text_data.size() == 4 && !size_in_bytes)
+		{
+			unsigned char sz[4] = { 0 };
+			std::vector<unsigned char>::iterator it = text_data.begin();
+			for (unsigned int j = 0; j < 4; j++)
+			{
+				sz[j] = *it;
+				it++;
+			}
+			memcpy(&size_in_bytes, sz, 4);
+			text_data.clear();
+		}
+
+		// If we know our size, and we've reached our size, we're done
+		if (size_in_bytes && size_in_bytes == text_data.size())
 			break;
 
 		if (using_XOR)
@@ -267,17 +288,12 @@ void extract_text_from_img_data(std::vector<unsigned char>& img_data,
 			tmp = tmp >> 5; // ...then back right 5 bits
 			reconstruct |= tmp;
 			break;
-		default: // Alpha channel, so commit the reconstructed character or exit the loop on EOF
-			if (reconstruct == 0x1a) // EOF character
-				finished = true;
-			else
-				text_data.push_back(reconstruct);
+		default: // Alpha channel, so commit the reconstructed character
+			text_data.push_back(reconstruct);
 			reconstruct = 0;
 			break;
 		}
 		
-		// TODO: Fix the EOF character search above. An encrypted file may (and does in our test case)
-		//		include a byte of 0x1a after encryption. Need a better way to encode the length of the message.
 		index++;
 	}
 }
@@ -487,11 +503,7 @@ int main(int argc, char** argv)
 		try
 		{
 			read_png_from_file(cmd_args[MAP_CIPHER_IMAGE_FILENAME].c_str(), modified_img_data, w, h);
-			// TODO: FIX this bug...the EOF doesn't survive encryption. Need some kind of out of band key,
-			//		or otherwise something that survives encrypt in a way that extraction of decrypted
-			//		stuff works. Maybe add an encrypted character count or something to the beginning of 
-			//		the cipher text? Need to read up on how others solve this.
-			extract_text_from_img_data(modified_img_data, ref_img_data, cypher_text);
+			extract_text_from_img_data(modified_img_data,  ref_img_data, cypher_text);
 			// TODO: Add a command line option to get this key from the user; don't just make it up here
 			// ALSO: This is an optional step. Make it so.
 			openssl_aes_decrypt("thisismysupersecretkeythateverybodyloves", cypher_text, modified_text_data);
