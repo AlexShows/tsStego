@@ -18,13 +18,14 @@
 #define MAP_USING_XOR 0x2
 #define MAP_USING_XOR_STR "using_xor"
 
-#define MAP_OPERATION_TYPE 0x3
+#define MAP_OPERATION_TYPE 0x4
 #define MAP_ENCODE_OPERATION_NAME "encode"
 #define MAP_DECODE_OPERATION_NAME "decode"
 
-#define MAP_PLAINTEXT_FILENAME 0x4
-#define MAP_REF_IMAGE_FILENAME 0x5
-#define MAP_CIPHER_IMAGE_FILENAME 0x6
+#define MAP_PLAINTEXT_FILENAME 0x8
+#define MAP_REF_IMAGE_FILENAME 0x10
+#define MAP_CIPHER_IMAGE_FILENAME 0x20
+#define MAP_PASSWORD_STRING 0x40
 
 void display_usage_info();
 
@@ -208,6 +209,7 @@ void merge_text_into_img_data(std::vector<unsigned char>& text_data, std::vector
 	}
 }
 
+// PARAMETERS: Image Data, Reference Image Data, Text Data, Using_XOR
 // Given an image or images, extract the text found inside them
 // See the merge function for more on how the text is embedded in the image
 // If the using_XOR flag is set, ref_img_data must be valid, as it's required
@@ -307,13 +309,13 @@ void capture_args(int argc, char** argv,
 	/******************************************************
 	There are several usages that result in different argument counts:
 
-		1. .exe encode text ref_img cipher_img
+		1. .exe encode text ref_img cipher_img optional_password_string
 				This encodes the text file given into a reference image, producing a cipher image
-		2. .exe encode using_xor text ref_img cipher_img
+		2. .exe encode using_xor text ref_img cipher_img optional_password_string
 				This encodes the text file given into a reference image using XOR, producing a cipher image 
-		3. .exe decode cipher_img text
+		3. .exe decode cipher_img text optional_password_string
 				This decodes the cipher image, producing a text file 
-		4. .exe decode using_xor cipher_img ref_img text
+		4. .exe decode using_xor cipher_img ref_img text optional_password_string
 				This decodes the cipher image using XOR and the reference image, producing the text
 
 	Thus there could be 4 to 6 parameters in total, and the order varies depending on the op.
@@ -373,11 +375,13 @@ void capture_args(int argc, char** argv,
 			args_map[MAP_PLAINTEXT_FILENAME] = argv[n + 2];
 			args_map[MAP_REF_IMAGE_FILENAME] = argv[n + 3];
 			args_map[MAP_CIPHER_IMAGE_FILENAME] = argv[n + 4];
+			args_map[MAP_PASSWORD_STRING] = argv[n + 5];
 		}
 		else if (args_map[MAP_OPERATION_TYPE] == MAP_DECODE_OPERATION_NAME)
 		{
 			args_map[MAP_CIPHER_IMAGE_FILENAME] = argv[n + 2];
 			args_map[MAP_PLAINTEXT_FILENAME] = argv[n + 3];
+			args_map[MAP_PASSWORD_STRING] = argv[n + 4];
 		}
 	}
 	catch (...)
@@ -443,6 +447,7 @@ void display_about_info()
 //		- Extract the cipher text from the enciphered image data structure [ DONE ]
 //		- Encipher from plain text [ DONE ]
 //		- Decipher to plain text [ DONE ]
+//		- Add command line option to pass the encryption key to be used [ DONE ]
 int main(int argc, char** argv)
 {
 	display_about_info();
@@ -480,9 +485,9 @@ int main(int argc, char** argv)
 		try
 		{
 			read_text_file(cmd_args[MAP_PLAINTEXT_FILENAME].c_str(), plain_text);
-			// TODO: Add a command line option to get this key from the user; don't just make it up here
-			// ALSO: This is an optional step. Make it so.
-			openssl_aes_encrypt("thisismysupersecretkeythateverybodyloves", plain_text, cypher_text);
+			if (cmd_args[MAP_PASSWORD_STRING].size() == 0)
+				cmd_args[MAP_PASSWORD_STRING] = "mysupersecretpasswordthatnobodywouldguess";
+			openssl_aes_encrypt(cmd_args[MAP_PASSWORD_STRING].c_str(), plain_text, cypher_text);
 			read_png_from_file(cmd_args[MAP_REF_IMAGE_FILENAME].c_str(), img_data, w, h);
 			merge_text_into_img_data(cypher_text, img_data);
 			write_png_to_file(cmd_args[MAP_CIPHER_IMAGE_FILENAME].c_str(), img_data, w, h);
@@ -503,10 +508,10 @@ int main(int argc, char** argv)
 		try
 		{
 			read_png_from_file(cmd_args[MAP_CIPHER_IMAGE_FILENAME].c_str(), modified_img_data, w, h);
-			extract_text_from_img_data(modified_img_data,  ref_img_data, cypher_text);
-			// TODO: Add a command line option to get this key from the user; don't just make it up here
-			// ALSO: This is an optional step. Make it so.
-			openssl_aes_decrypt("thisismysupersecretkeythateverybodyloves", cypher_text, modified_text_data);
+			extract_text_from_img_data(modified_img_data, ref_img_data, cypher_text);
+			if (cmd_args[MAP_PASSWORD_STRING].size() == 0)
+				cmd_args[MAP_PASSWORD_STRING] = "mysupersecretpasswordthatnobodywouldguess";
+			openssl_aes_decrypt(cmd_args[MAP_PASSWORD_STRING].c_str(), cypher_text, modified_text_data);
 			write_text_file(cmd_args[MAP_PLAINTEXT_FILENAME].c_str(), modified_text_data);
 		}
 		catch (std::exception const& e)
