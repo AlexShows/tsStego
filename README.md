@@ -1,7 +1,7 @@
 tsStego
 =======
 
-An implementation of simple stegonography in C++.
+An implementation of simple stegonography in C++. A binary distribution for testing is provided in the tsStego zip file, along with a ReadMe.txt file showing usage examples.
  
 Given a text file input and a PNG file input, it encrypts and merges the text file into the PNG file, then outputs the new file (which will likely look just like the original to the naked eye).
 
@@ -13,7 +13,6 @@ Future Work
 ===========
 
 Add XOR of text into image.
-Fix the message length check bug.
 
 License
 =======

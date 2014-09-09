@@ -33,5 +33,6 @@
   <ItemGroup>
     <None Include="..\README.md" />
     <None Include="..\LICENSE" />
+    <None Include="..\tsStego_20140908.zip" />
   </ItemGroup>
 </Project>
