@@ -231,7 +231,7 @@ void extract_text_from_img_data(std::vector<unsigned char>& img_data,
 		// Just trying to trigger an exception here if these are NULL pointers
 		unsigned int img_data_size = img_data.size();
 		unsigned int text_data_size = text_data.size();
-		unsigned int ref_img_data_size = 0;
+		unsigned int ref_img_data_size = ref_img_data.size();
 		if (using_XOR)
 			ref_img_data_size = ref_img_data.size();				
 	}
@@ -263,6 +263,11 @@ void extract_text_from_img_data(std::vector<unsigned char>& img_data,
 			memcpy(&size_in_bytes, sz, 4);
 			text_data.clear();
 		}
+
+		// If we know our size, and we're using XOR, and our ref img doesn't have enough bytes,
+		// abort
+		if (size_in_bytes && size_in_bytes > ref_img_data.size())
+			throw std::exception("Exception in extract_text_from_img_data: reference image is too small.");
 
 		// If we know our size, and we've reached our size, we're done
 		if (size_in_bytes && size_in_bytes == text_data.size())
@@ -355,15 +360,8 @@ void capture_args(int argc, char** argv,
 		args_map[MAP_OPERATION_TYPE] = argv[n + 1];
 
 		// The third _could_ be the xor flag, or it could be a filename
-		if (argv[n + 2] == MAP_USING_XOR_STR)
+		if (!_stricmp(argv[n + 2],MAP_USING_XOR_STR))
 		{
-			// Because of the use of XOR, the arg count must be 6 now
-			if (argc < 6)
-			{
-				std::cout << "Too few arguments provided. See usage info." << std::endl;
-				throw std::exception("In capture_args: too few arguments provided.");
-			}
-
 			args_map[MAP_USING_XOR] = MAP_USING_XOR_STR;
 			n++;
 		}
@@ -372,16 +370,33 @@ void capture_args(int argc, char** argv,
 		// The next sequence depends on the operation
 		if (args_map[MAP_OPERATION_TYPE] == MAP_ENCODE_OPERATION_NAME)
 		{
+			// If using XOR...the arg count should be 6 for the encode
+			if (args_map[MAP_USING_XOR] == MAP_USING_XOR_STR && (argc < n+6))
+			{
+				std::cout << "Too few arguments provided. See usage info." << std::endl;
+				throw std::exception("In capture_args: too few arguments provided.");
+			}
+			
 			args_map[MAP_PLAINTEXT_FILENAME] = argv[n + 2];
 			args_map[MAP_REF_IMAGE_FILENAME] = argv[n + 3];
 			args_map[MAP_CIPHER_IMAGE_FILENAME] = argv[n + 4];
-			args_map[MAP_PASSWORD_STRING] = argv[n + 5];
+			if (argc == n+6) // Optional password
+				args_map[MAP_PASSWORD_STRING] = argv[n + 5];	
 		}
 		else if (args_map[MAP_OPERATION_TYPE] == MAP_DECODE_OPERATION_NAME)
 		{
+			if (args_map[MAP_USING_XOR] == MAP_USING_XOR_STR && (argc < n + 6))
+			{
+				std::cout << "Too few arguments provided. See usage info." << std::endl;
+				throw std::exception("In capture_args: too few arguments provided.");
+			}
+
 			args_map[MAP_CIPHER_IMAGE_FILENAME] = argv[n + 2];
+			if (args_map[MAP_USING_XOR] == MAP_USING_XOR_STR)
+				args_map[MAP_REF_IMAGE_FILENAME] = argv[n + 3];
 			args_map[MAP_PLAINTEXT_FILENAME] = argv[n + 3];
-			args_map[MAP_PASSWORD_STRING] = argv[n + 4];
+			if (argc == n+6) // optional password
+				args_map[MAP_PASSWORD_STRING] = argv[n + 4];
 		}
 	}
 	catch (...)
@@ -469,9 +484,9 @@ int main(int argc, char** argv)
 	std::vector<unsigned char> img_data;
 	unsigned int h, w;
 
-	// TODO: Test the XOR feature
+	// TODO: Fix the XOR feature
 	std::vector<unsigned char> modified_img_data;
-	std::vector<unsigned char> ref_img_data; // Not using this for now
+	std::vector<unsigned char> ref_img_data;
 	std::vector<unsigned char> modified_text_data;
 	
 	if (cmd_args[MAP_OPERATION_TYPE] == MAP_ENCODE_OPERATION_NAME)
@@ -489,7 +504,10 @@ int main(int argc, char** argv)
 				cmd_args[MAP_PASSWORD_STRING] = "mysupersecretpasswordthatnobodywouldguess";
 			openssl_aes_encrypt(cmd_args[MAP_PASSWORD_STRING].c_str(), plain_text, cypher_text);
 			read_png_from_file(cmd_args[MAP_REF_IMAGE_FILENAME].c_str(), img_data, w, h);
-			merge_text_into_img_data(cypher_text, img_data);
+			if (cmd_args[MAP_USING_XOR] == MAP_USING_XOR_STR)
+				merge_text_into_img_data(cypher_text, img_data, true); // Using XOR flag
+			else
+				merge_text_into_img_data(cypher_text, img_data); // Not using XOR
 			write_png_to_file(cmd_args[MAP_CIPHER_IMAGE_FILENAME].c_str(), img_data, w, h);
 		}
 		catch (std::exception const& e)
@@ -508,7 +526,14 @@ int main(int argc, char** argv)
 		try
 		{
 			read_png_from_file(cmd_args[MAP_CIPHER_IMAGE_FILENAME].c_str(), modified_img_data, w, h);
-			extract_text_from_img_data(modified_img_data, ref_img_data, cypher_text);
+			if (cmd_args[MAP_USING_XOR] == MAP_USING_XOR_STR)
+			{
+				read_png_from_file(cmd_args[MAP_REF_IMAGE_FILENAME].c_str(), ref_img_data, w, h);
+				extract_text_from_img_data(modified_img_data, ref_img_data, cypher_text, true);
+			}
+				
+			else
+				extract_text_from_img_data(modified_img_data, ref_img_data, cypher_text);
 			if (cmd_args[MAP_PASSWORD_STRING].size() == 0)
 				cmd_args[MAP_PASSWORD_STRING] = "mysupersecretpasswordthatnobodywouldguess";
 			openssl_aes_decrypt(cmd_args[MAP_PASSWORD_STRING].c_str(), cypher_text, modified_text_data);
