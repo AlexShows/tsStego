@@ -371,7 +371,7 @@ void capture_args(int argc, char** argv,
 		if (args_map[MAP_OPERATION_TYPE] == MAP_ENCODE_OPERATION_NAME)
 		{
 			// If using XOR...the arg count should be 6 for the encode
-			if (args_map[MAP_USING_XOR] == MAP_USING_XOR_STR && (argc < n+6))
+			if (args_map[MAP_USING_XOR] == MAP_USING_XOR_STR && (argc < n+5))
 			{
 				std::cout << "Too few arguments provided. See usage info." << std::endl;
 				throw std::exception("In capture_args: too few arguments provided.");
@@ -385,7 +385,7 @@ void capture_args(int argc, char** argv,
 		}
 		else if (args_map[MAP_OPERATION_TYPE] == MAP_DECODE_OPERATION_NAME)
 		{
-			if (args_map[MAP_USING_XOR] == MAP_USING_XOR_STR && (argc < n + 6))
+			if (args_map[MAP_USING_XOR] == MAP_USING_XOR_STR && (argc < n + 5))
 			{
 				std::cout << "Too few arguments provided. See usage info." << std::endl;
 				throw std::exception("In capture_args: too few arguments provided.");
@@ -393,9 +393,12 @@ void capture_args(int argc, char** argv,
 
 			args_map[MAP_CIPHER_IMAGE_FILENAME] = argv[n + 2];
 			if (args_map[MAP_USING_XOR] == MAP_USING_XOR_STR)
+			{
 				args_map[MAP_REF_IMAGE_FILENAME] = argv[n + 3];
+				n++;
+			}
 			args_map[MAP_PLAINTEXT_FILENAME] = argv[n + 3];
-			if (argc == n+6) // optional password
+			if (argc == n+5) // optional password
 				args_map[MAP_PASSWORD_STRING] = argv[n + 4];
 		}
 	}
@@ -484,7 +487,6 @@ int main(int argc, char** argv)
 	std::vector<unsigned char> img_data;
 	unsigned int h, w;
 
-	// TODO: Fix the XOR feature
 	std::vector<unsigned char> modified_img_data;
 	std::vector<unsigned char> ref_img_data;
 	std::vector<unsigned char> modified_text_data;
@@ -521,6 +523,8 @@ int main(int argc, char** argv)
 		std::cout << std::endl;
 		std::cout << "Decoding " << cmd_args[MAP_CIPHER_IMAGE_FILENAME].c_str() << std::endl;
 		std::cout << "to produce the output file: " << cmd_args[MAP_PLAINTEXT_FILENAME].c_str() << std::endl;
+		if (cmd_args[MAP_USING_XOR] == MAP_USING_XOR_STR)
+			std::cout << "Using XOR with this image: " << cmd_args[MAP_REF_IMAGE_FILENAME].c_str() << std::endl;
 		std::cout << std::endl;
 
 		try
