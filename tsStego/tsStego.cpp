@@ -161,8 +161,6 @@ void merge_text_into_img_data(std::vector<unsigned char>& text_data, std::vector
 	// Loop through all the characters
 	for (auto& c : text_data)
 	{
-		// TODO: Test and fix the XOR paths of this function
-
 		// First color channel is Red
 
 		// First 3 MSBs from the character are put into the Red channel's 3 LSBs
@@ -175,7 +173,9 @@ void merge_text_into_img_data(std::vector<unsigned char>& text_data, std::vector
 			img_data[img_index] = (img_data[img_index] & 0xF8) | (tmp & 0x7);
 		}
 		else // Otherwise XOR the bits in, requiring the original image's pixel data to extract
-			img_data[img_index] ^= tmp;
+		{
+			img_data[img_index] ^= (tmp & 0x7);
+		}
 
 		img_index++; // Next color channel (Green)
 
@@ -189,7 +189,7 @@ void merge_text_into_img_data(std::vector<unsigned char>& text_data, std::vector
 			img_data[img_index] = (img_data[img_index] & 0xFC) | (tmp & 0x3);
 		}
 		else // Otherwise XOR the bits in, requiring the original image's pixel data to extract
-			img_data[img_index] ^= tmp;
+			img_data[img_index] ^= (tmp & 0x7);
 
 		img_index++; // Next color channel (Blue)
 
@@ -202,7 +202,7 @@ void merge_text_into_img_data(std::vector<unsigned char>& text_data, std::vector
 			img_data[img_index] = (img_data[img_index] & 0xF8) | (tmp & 0x7);
 		}
 		else // Otherwise XOR the bits in, requiring the original image's pixel data to extract
-			img_data[img_index] ^= tmp;
+			img_data[img_index] ^= (tmp & 0x7);
 		
 		img_index++; // Next color channel (Alpha)
 		img_index++; // Next color channel (Red of the next pixel...so we're ready for next char)
@@ -216,9 +216,6 @@ void merge_text_into_img_data(std::vector<unsigned char>& text_data, std::vector
 // in order to extract the text properly
 // ref_img_data can be NULL, but using_XOR must be false if it is
 // text_data should be an empty vector, but if it isn't, the data will be appended to the end
-// TODO: Need to fix the passing of NULL for ref_img_data
-//		Consider splitting the XOR mode of this function into a separate function
-//		...easier and nicer looking but poor re-use
 // Throws std::exception on error
 void extract_text_from_img_data(std::vector<unsigned char>& img_data, 
 								std::vector<unsigned char>& ref_img_data, 
@@ -453,7 +450,6 @@ void display_about_info()
 	std::cout << "PNG support provided by Lode Vandevenne" << std::endl;
 }
 
-// TODO: 
 //		- Load the PNG file into the image data structure [ DONE ] 
 //		- Load the plain text file [ DONE ] 
 //		- Save the image data structure as a new PNG file [ DONE ]

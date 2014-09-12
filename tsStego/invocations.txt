@@ -1,0 +1,12 @@
+
+encode example.txt irish_stamp.png stego_out.png
+decode stego_out.png decoded.txt
+
+encode using_xor example.txt irish_stamp.png stego_out.png
+decode using_xor stego_out.png irish_stamp.png decoded.txt
+
+encode example.txt irish_stamp.png stego_out.png reallybadpassword
+decode stego_out.png decoded.txt reallybadpassword
+
+encode using_xor example.txt irish_stamp.png stego_out.png reallybadpassword
+decode using_xor stego_out.png irish_stamp.png decoded.txt reallybadpassword
