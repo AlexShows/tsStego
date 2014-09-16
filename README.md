@@ -12,7 +12,7 @@ Conversely, it can reverse the operation to extract a text file from a PNG file 
 Future Work
 ===========
 
-Fix the XOR feature.
+Add a GUI
 
 License
 =======
